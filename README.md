@@ -6,7 +6,7 @@ Web Attached Storage: a place to store all your stuff.
 ## Intro
 
 Like a NAS (*Network Attached Storage*), but with a web focus.  
-The extra **S** in WAS**S**, is so the pronunciation is th same as NAS.  
+The extra **S** in WAS**S**, is so the pronunciation is the same as NAS.  
 WASS aims to be your backup, and access solution for your private files.  
 
 # Credits
