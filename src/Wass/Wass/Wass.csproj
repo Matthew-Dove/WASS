@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>WASS</PackageId>
-    <Version>0.0.1</Version>
+    <Version>1.0.0</Version>
     <Authors>Matthew Dove</Authors>
     <Product>WASS</Product>
     <Description>Web Attached Storage: a place to store all your stuff.</Description>
