@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>WASS</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Matthew Dove</Authors>
+    <Product>WASS</Product>
+    <Description>Web Attached Storage: a place to store all your stuff.</Description>
+    <Copyright>Matthew Dove. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/Matthew-Dove/WASS</PackageProjectUrl>
+    <PackageIcon>dove.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Matthew-Dove/WASS</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>NAS</PackageTags>
+    <PackageReleaseNotes>Empty project to settle on repo + nuget names.</PackageReleaseNotes>
+    <PackageLicenseFile>C:\GitHub\WASS\LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\assets\images\dove.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
