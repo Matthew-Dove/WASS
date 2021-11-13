@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>WASS</PackageId>
-    <Version>1.0.0</Version>
+    <Version>0.0.1</Version>
     <Authors>Matthew Dove</Authors>
     <Product>WASS</Product>
     <Description>Web Attached Storage: a place to store all your stuff.</Description>
@@ -29,6 +29,10 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wass.Packages\Wass.Packages.csproj" />
   </ItemGroup>
 
 </Project>
