@@ -21,11 +21,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\assets\images\dove.png">
+    <None Include="..\..\assets\images\dove.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\..\..\README.md">
+    <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
