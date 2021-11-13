@@ -17,7 +17,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>NAS</PackageTags>
     <PackageReleaseNotes>Empty project to settle on repo + nuget names.</PackageReleaseNotes>
-    <PackageLicenseFile>C:\GitHub\WASS\LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
