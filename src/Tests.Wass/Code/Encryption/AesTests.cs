@@ -11,7 +11,11 @@ namespace Tests.Wass.Code.Encryption
         [TestMethod]
         public void Encrypt_Decrypt()
         {
-            Aes.Example();
+            var key = "b14ca5898a4e4133bbce2ea2315a1916";
+            var plaintext = "Hello World";
+            var encrypted = _aes.Encrypt(key, plaintext);
+            var decrypted = _aes.Decrypt(key, encrypted);
+            Assert.AreEqual(plaintext, decrypted);
         }
     }
 }

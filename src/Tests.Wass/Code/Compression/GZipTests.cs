@@ -10,7 +10,7 @@ namespace Tests.Wass.Code.Compression
         private readonly GZip _gzip = new();
 
         [TestMethod]
-        public void Encrypt_Decrypt()
+        public void Compress_Decompress()
         {
             var input = "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss";
             var inputBytes = Encoding.UTF8.GetBytes(input);
