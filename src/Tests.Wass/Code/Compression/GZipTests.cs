@@ -14,8 +14,10 @@ namespace Tests.Wass.Code.Compression
         {
             var input = "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss";
             var inputBytes = Encoding.UTF8.GetBytes(input);
+
             var compression = _gzip.Compress(inputBytes);
             var outputBytes = _gzip.Decompress(compression);
+
             var output = Encoding.UTF8.GetString(outputBytes);
             Assert.AreEqual(input, output);
             Assert.IsTrue(inputBytes.Length > compression.Length);

@@ -6,8 +6,8 @@ namespace Wass.Code.Encryption
 {
     public sealed class Aes
     {
-        public string Encrypt(string key, string plaintext) => EncryptPlaintext(key, plaintext);
-        public string Decrypt(string key, string ciphertext) => DecryptCiphertext(key, ciphertext);
+        public byte[] Encrypt(string key, byte[] plainbytes) => EncryptPlaintext(key, plainbytes);
+        public byte[] Decrypt(string key, byte[] cipherbytes) => DecryptCiphertext(key, cipherbytes);
 
         private const int _iterations = 10000;
         private const int _saltSize = 16;
@@ -17,9 +17,8 @@ namespace Wass.Code.Encryption
 
         private static readonly byte[] _salt = RandomNumberGenerator.GetBytes(_saltSize);
 
-        private static string EncryptPlaintext(string key, string plaintext)
+        private static byte[] EncryptPlaintext(string key, byte[] plainbytes)
         {
-            var plainbytes = Encoding.Unicode.GetBytes(plaintext);
             using var sea = Sea.Create();
             using var crypto = new Rfc2898DeriveBytes(key, _salt, _iterations, hashAlgorithm);
             sea.Key = crypto.GetBytes(_keySize);
@@ -28,13 +27,12 @@ namespace Wass.Code.Encryption
             using var cs = new CryptoStream(ms, sea.CreateEncryptor(), CryptoStreamMode.Write);
             cs.Write(plainbytes, 0, plainbytes.Length);
             cs.Close();
-            var ciphertext = Convert.ToBase64String(ms.ToArray());
-            return ciphertext;
+            var cipherbytes = ms.ToArray();
+            return cipherbytes;
         }
 
-        private static string DecryptCiphertext(string key, string ciphertext)
+        private static byte[] DecryptCiphertext(string key, byte[] cipherbytes)
         {
-            var cipherbytes = Convert.FromBase64String(ciphertext);
             using var sea = Sea.Create();
             using var crypto = new Rfc2898DeriveBytes(key, _salt, _iterations, hashAlgorithm);
             sea.Key = crypto.GetBytes(_keySize);
@@ -43,8 +41,8 @@ namespace Wass.Code.Encryption
             using var cs = new CryptoStream(ms, sea.CreateDecryptor(), CryptoStreamMode.Write);
             cs.Write(cipherbytes, 0, cipherbytes.Length);
             cs.Close();
-            var plaintext = Encoding.Unicode.GetString(ms.ToArray());
-            return plaintext;
+            var plainbytes = ms.ToArray();
+            return plainbytes;
         }
     }
 }

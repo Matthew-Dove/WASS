@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Text;
 using Wass.Code.Encryption;
 
 namespace Tests.Wass.Code.Encryption
@@ -11,10 +12,14 @@ namespace Tests.Wass.Code.Encryption
         [TestMethod]
         public void Encrypt_Decrypt()
         {
-            var key = "b14ca5898a4e4133bbce2ea2315a1916";
-            var plaintext = "Hello World";
-            var encrypted = _aes.Encrypt(key, plaintext);
-            var decrypted = _aes.Decrypt(key, encrypted);
+            var key = "The quick brown fox jumps over the lazy dog.";
+            var plaintext = "Hello World!";
+            var plainbytes = Encoding.Unicode.GetBytes(plaintext);
+
+            var cipherbytes = _aes.Encrypt(key, plainbytes);
+            var decryptedbytes = _aes.Decrypt(key, cipherbytes);
+
+            var decrypted = Encoding.Unicode.GetString(decryptedbytes);
             Assert.AreEqual(plaintext, decrypted);
         }
     }
