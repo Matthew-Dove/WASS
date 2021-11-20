@@ -1,2 +1,0 @@
-﻿I implement the core functionaity of WASS.
-Encryption, compression, and CRUD operations to targets (etc).
