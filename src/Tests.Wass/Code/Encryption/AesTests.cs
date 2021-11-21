@@ -7,8 +7,6 @@ namespace Tests.Wass.Code.Encryption
     [TestClass]
     public class AesTests
     {
-        private readonly Aes _aes = new();
-
         [TestMethod]
         public void Encrypt_Decrypt()
         {
@@ -16,8 +14,8 @@ namespace Tests.Wass.Code.Encryption
             var plaintext = "Hello World!";
             var plainbytes = Encoding.Unicode.GetBytes(plaintext);
 
-            var cipherbytes = _aes.Encrypt(key, plainbytes);
-            var decryptedbytes = _aes.Decrypt(key, cipherbytes);
+            var cipherbytes = Aes.Encrypt(key, plainbytes);
+            var decryptedbytes = Aes.Decrypt(key, cipherbytes);
 
             var decrypted = Encoding.Unicode.GetString(decryptedbytes);
             Assert.AreEqual(plaintext, decrypted);

@@ -21,5 +21,9 @@
 	<ItemGroup>
 	  <Folder Include="Code\" />
 	</ItemGroup>
+	
+	<ItemGroup>
+	  <PackageReference Include="AWSSDK.S3" Version="3.7.4.9" />
+	</ItemGroup>
 
 </Project>

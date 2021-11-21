@@ -41,4 +41,8 @@
 		</AssemblyAttribute>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Code\Persistence\Aws\" />
+	</ItemGroup>
+
 </Project>
