@@ -3,18 +3,27 @@ using Sea = System.Security.Cryptography.Aes;
 
 namespace Wass.Code.Encryption
 {
-    public sealed class Aes
+    public interface IAesClient
     {
-        public byte[] Encrypt(string password, byte[] plainbytes) => EncryptPlaintext(password, plainbytes);
-        public byte[] Decrypt(string password, byte[] cipherbytes) => DecryptCiphertext(password, cipherbytes);
+        byte[] Encrypt(string password, byte[] plainbytes);
+        byte[] Decrypt(string password, byte[] cipherbytes);
+    }
 
+    public sealed class AesClient : IAesClient
+    {
+        public byte[] Encrypt(string password, byte[] plainbytes) => Aes.Encrypt(password, plainbytes);
+        public byte[] Decrypt(string password, byte[] cipherbytes) => Aes.Decrypt(password, cipherbytes);
+    }
+
+    public static class Aes
+    {
         private const int _iterations = 10000;
         private const int _saltSize = 16;
         private const int _keySize = 32;
         private const int _ivSize = 16;
         private static readonly HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
 
-        private static byte[] EncryptPlaintext(string password, byte[] plainbytes)
+        public static byte[] Encrypt(string password, byte[] plainbytes)
         {
             using var sea = Sea.Create();
             var salt = RandomNumberGenerator.GetBytes(_saltSize);
@@ -32,7 +41,7 @@ namespace Wass.Code.Encryption
             return buffer;
         }
 
-        private static byte[] DecryptCiphertext(string password, byte[] cipherbytes)
+        public static byte[] Decrypt(string password, byte[] cipherbytes)
         {
             using var sea = Sea.Create();
             var salt = new byte[_saltSize];

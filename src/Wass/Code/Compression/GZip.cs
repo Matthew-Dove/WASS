@@ -2,12 +2,21 @@
 
 namespace Wass.Code.Compression
 {
-    public sealed class GZip
+    public interface IGZipClient
     {
-        public byte[] Compress(byte[] data) => CompressStream(data);
-        public byte[] Decompress(byte[] data) => DecompressStream(data);
+        byte[] Compress(byte[] data);
+        byte[] Decompress(byte[] data);
+    }
 
-        private static byte[] CompressStream(byte[] data)
+    public sealed class GZipClient : IGZipClient
+    {
+        public byte[] Compress(byte[] data) => GZip.Compress(data);
+        public byte[] Decompress(byte[] data) => GZip.Decompress(data);
+    }
+
+    public static class GZip
+    {
+        public static byte[] Compress(byte[] data)
         {
             using var ms = new MemoryStream();
             using var zs = new GZipStream(ms, CompressionMode.Compress);
@@ -16,7 +25,7 @@ namespace Wass.Code.Compression
             return ms.ToArray();
         }
 
-        private static byte[] DecompressStream(byte[] data)
+        public static byte[] Decompress(byte[] data)
         {
             using var ms = new MemoryStream(data);
             using var zs = new GZipStream(ms, CompressionMode.Decompress);
