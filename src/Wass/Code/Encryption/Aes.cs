@@ -3,24 +3,13 @@ using Sea = System.Security.Cryptography.Aes;
 
 namespace Wass.Code.Encryption
 {
-    public interface IAesClient
-    {
-        byte[] Encrypt(string password, byte[] plainbytes);
-        byte[] Decrypt(string password, byte[] cipherbytes);
-    }
-
-    public sealed class AesClient : IAesClient
-    {
-        public byte[] Encrypt(string password, byte[] plainbytes) => Aes.Encrypt(password, plainbytes);
-        public byte[] Decrypt(string password, byte[] cipherbytes) => Aes.Decrypt(password, cipherbytes);
-    }
-
-    public static class Aes
+    internal static class Aes
     {
         private const int _iterations = 10000;
         private const int _saltSize = 16;
         private const int _keySize = 32;
         private const int _ivSize = 16;
+
         private static readonly HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
 
         public static byte[] Encrypt(string password, byte[] plainbytes)

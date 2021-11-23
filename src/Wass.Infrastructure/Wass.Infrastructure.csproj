@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -16,10 +16,6 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>Wass</_Parameter1>
 		</AssemblyAttribute>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Folder Include="Code\" />
 	</ItemGroup>
 	
 	<ItemGroup>

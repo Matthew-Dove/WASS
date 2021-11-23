@@ -1,2 +1,1 @@
 ﻿I have nuget packages installed for the rest of the project to use.
-I then provide interfaces for those packages, so the other projects can get the functionality from me, without knowing about the packages being used.

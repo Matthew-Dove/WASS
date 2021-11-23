@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <PackageId>WASS</PackageId>
     <Version>0.0.1</Version>
     <Authors>Matthew Dove</Authors>
@@ -39,10 +39,6 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>Tests.Wass</_Parameter1>
 		</AssemblyAttribute>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Code\Persistence\Aws\" />
 	</ItemGroup>
 
 </Project>

@@ -2,19 +2,7 @@
 
 namespace Wass.Code.Compression
 {
-    public interface IGZipClient
-    {
-        byte[] Compress(byte[] data);
-        byte[] Decompress(byte[] data);
-    }
-
-    public sealed class GZipClient : IGZipClient
-    {
-        public byte[] Compress(byte[] data) => GZip.Compress(data);
-        public byte[] Decompress(byte[] data) => GZip.Decompress(data);
-    }
-
-    public static class GZip
+    internal static class GZip
     {
         public static byte[] Compress(byte[] data)
         {
