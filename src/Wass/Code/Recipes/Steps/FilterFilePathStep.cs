@@ -19,17 +19,13 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                var regularExpression = new Regex(regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-                var matchBehaviour = string.Empty;
-                if (match.IsEqualTo("include") || match.IsEqualTo("exclude")) matchBehaviour = match.ToUpperInvariant();
-
-                var searchArea = string.Empty;
-                if (search.IsEqualTo("path") || search.IsEqualTo("location") || search.IsEqualTo("name") || search.IsEqualTo("extension")) searchArea = search.ToUpperInvariant();
+                string
+                    matchBehaviour = match.IsEqualTo("include", "exclude") ? match :string.Empty,
+                    searchArea = search.IsEqualTo("path", "location", "name", "extension") ? search : string.Empty;
 
                 if (matchBehaviour != string.Empty && searchArea != string.Empty)
                 {
-                    var target = searchArea switch
+                    var target = searchArea.ToUpperInvariant() switch
                     {
                         "PATH" => file.GetPath(),
                         "LOCATION" => file.Location,
@@ -40,8 +36,9 @@ namespace Wass.Code.Recipes.Steps
 
                     if (target != string.Empty)
                     {
+                        var regularExpression = new Regex(regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                         var matches = regularExpression.Matches(target);
-                        var keepFile = (matchBehaviour switch
+                        var keepFile = (matchBehaviour.ToUpperInvariant() switch
                         {
                             "INCLUDE" => matches.Count > 0,
                             "EXCLUDE" => matches.Count == 0,
