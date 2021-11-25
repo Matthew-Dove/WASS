@@ -14,18 +14,20 @@ namespace Wass.Code.Recipes.Steps
         {
             if (!file.IsValid()) return false.Trail($"{nameof(CompressFilePathStep)} validation failed.");
             var isValid = false;
-            byte[] compressedBytes = null;
 
             try
             {
-                compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Location));
-                file = file.WithLocation(Encoding.UTF8.GetString(compressedBytes));
+                var locationBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Location));
+                var nameBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Name));
+                var extensionBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Extension));
 
-                compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Name));
-                file = file.WithName(Encoding.UTF8.GetString(compressedBytes));
+                var location = Encoding.UTF8.GetString(locationBytes);
+                var name = Encoding.UTF8.GetString(nameBytes);
+                var extension = Encoding.UTF8.GetString(extensionBytes);
 
-                compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Extension));
-                file = file.WithExtension(Encoding.UTF8.GetString(compressedBytes));
+                file = file.WithLocation(location);
+                file = file.WithName(name);
+                file = file.WithExtension(extension);
 
                 isValid = true;
             }

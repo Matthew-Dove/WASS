@@ -15,18 +15,20 @@ namespace Wass.Code.Recipes.Steps
         {
             if (!file.IsValid() || !Config.Encryption.IsValid()) return false.Trail($"{nameof(EncryptFilePathStep)} validation failed.");
             var isValid = false;
-            byte[] cipherbytes = null;
 
             try
             {
-                cipherbytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Location));
-                file = file.WithLocation(Encoding.UTF8.GetString(cipherbytes));
+                var locationBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Location));
+                var nameBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Name));
+                var extensionBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Extension));
 
-                cipherbytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Name));
-                file = file.WithName(Encoding.UTF8.GetString(cipherbytes));
+                var location = Encoding.UTF8.GetString(locationBytes);
+                var name = Encoding.UTF8.GetString(nameBytes);
+                var extension = Encoding.UTF8.GetString(extensionBytes);
 
-                cipherbytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Extension));
-                file = file.WithExtension(Encoding.UTF8.GetString(cipherbytes));
+                file = file.WithLocation(location);
+                file = file.WithName(name);
+                file = file.WithExtension(extension);
 
                 isValid = true;
             }

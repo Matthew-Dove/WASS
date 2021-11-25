@@ -13,18 +13,16 @@ namespace Wass.Code.Recipes.Steps
         {
             if (!file.IsValid()) return false.Trail($"{nameof(FilePathToHexStep)} validation failed.");
             var isValid = false;
-            string hex = null;
 
             try
             {
-                hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Location));
-                file = file.WithLocation(hex);
+                var location = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Location));
+                var name = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
+                var extension = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
 
-                hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
-                file = file.WithName(hex);
-
-                hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Extension));
-                file = file.WithExtension(hex);
+                file = file.WithLocation(location);
+                file = file.WithName(name);
+                file = file.WithExtension(extension);
 
                 isValid = true;
             }
