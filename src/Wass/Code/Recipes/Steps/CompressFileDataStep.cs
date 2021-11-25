@@ -1,4 +1,5 @@
-﻿using Wass.Code.Compression;
+﻿using System.Collections.Specialized;
+using Wass.Code.Compression;
 using Wass.Code.Infrastructure;
 
 namespace Wass.Code.Recipes.Steps
@@ -6,18 +7,18 @@ namespace Wass.Code.Recipes.Steps
     public sealed class CompressFileDataStep : Step
     {
         public CompressFileDataStep() : base(isAsync: false) { }
-        internal override bool Method(ref IngredientModel ingredients) => CompressFileData(ref ingredients);
-        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(ref FileModel file, ListDictionary ingredients) => CompressFileData(ref file, ingredients);
+        internal override Task<bool> MethodAsync(ref FileModel file, ListDictionary ingredients) => throw new NotImplementedException();
 
-        private static bool CompressFileData(ref IngredientModel ingredients)
+        private static bool CompressFileData(ref FileModel file, ListDictionary ingredients)
         {
-            if (!ingredients.IsValid()) return false.Trail($"{nameof(CompressFileDataStep)} validation failed.");
+            if (!file.IsValid()) return false.Trail($"{nameof(CompressFileDataStep)} validation failed.");
             var isValid = false;
 
             try
             {
-                var compressedBytes = GZip.Compress(ingredients.Data);
-                ingredients = ingredients.WithData(compressedBytes);
+                var compressedBytes = GZip.Compress(file.Data);
+                file = file.WithData(compressedBytes);
                 isValid = true;
             }
             catch (Exception ex)
