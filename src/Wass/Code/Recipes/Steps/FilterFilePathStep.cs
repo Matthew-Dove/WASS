@@ -6,12 +6,12 @@ namespace Wass.Code.Recipes.Steps
     public sealed class FilterFilePathStep : Step
     {
         internal FilterFilePathStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => FilterFilePath(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => FilterFilePath(file, ingredients);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
         private static readonly string[] _requiredIngredients = { "regex", "match", "search" };
 
-        private static bool FilterFilePath(ref FileModel file, IngredientModel ingredients)
+        private static bool FilterFilePath(FileModel file, IngredientModel ingredients)
         {
             if (!file.IsValid() || !ingredients.IsValid(_requiredIngredients)) return false.Trail($"{nameof(FilterFilePathStep)} validation failed.");
             var isValid = false;

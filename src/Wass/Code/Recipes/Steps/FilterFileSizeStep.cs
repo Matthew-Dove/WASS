@@ -5,8 +5,8 @@ namespace Wass.Code.Recipes.Steps
     public sealed class FilterFileSizeStep : Step
     {
         internal FilterFileSizeStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => FilterFileSize(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => FilterFileSize(file, ingredients);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
         private const long B = 1;
         private const long KB = 1024;
@@ -15,7 +15,7 @@ namespace Wass.Code.Recipes.Steps
 
         private static readonly string[] _requiredIngredients = { "comparison", "size", "unit" };
 
-        private static bool FilterFileSize(ref FileModel file, IngredientModel ingredients)
+        private static bool FilterFileSize(FileModel file, IngredientModel ingredients)
         {
             if (!file.IsValid() || !ingredients.IsValid(_requiredIngredients)) return false.Trail($"{nameof(FilterFileSizeStep)} validation failed.");
             var isValid = false;

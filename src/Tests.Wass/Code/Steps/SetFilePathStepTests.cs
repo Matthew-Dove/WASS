@@ -29,7 +29,7 @@ namespace Tests.Wass.Code.Steps
         public void Test()
         {
             var step = new SetFilePathStep();
-            step.Method(ref _file, _ingredients);
+            step.Method(_file, _ingredients);
         }
     }
 }

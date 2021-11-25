@@ -8,10 +8,10 @@ namespace Wass.Code.Recipes.Steps
     public sealed class EncryptFilePathStep : Step
     {
         internal EncryptFilePathStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => EncryptFilePath(ref file);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => EncryptFilePath(file);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool EncryptFilePath(ref FileModel file)
+        private static bool EncryptFilePath(FileModel file)
         {
             if (!file.IsValid() || !Config.Encryption.IsValid()) return false.Trail($"{nameof(EncryptFilePathStep)} validation failed.");
             var isValid = false;

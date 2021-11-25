@@ -6,10 +6,10 @@ namespace Wass.Code.Recipes.Steps
     public sealed class CompressFileDataStep : Step
     {
         internal CompressFileDataStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => CompressFileData(ref file);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => CompressFileData(file);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool CompressFileData(ref FileModel file)
+        private static bool CompressFileData(FileModel file)
         {
             if (!file.IsValid()) return false.Trail($"{nameof(CompressFileDataStep)} validation failed.");
             var isValid = false;

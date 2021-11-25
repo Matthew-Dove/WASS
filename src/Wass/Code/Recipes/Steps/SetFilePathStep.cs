@@ -5,12 +5,12 @@ namespace Wass.Code.Recipes.Steps
     public sealed class SetFilePathStep : Step
     {
         internal SetFilePathStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => SetFilePath(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => SetFilePath(file, ingredients);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
         private static readonly string[] _requiredIngredients = { "path" };
 
-        private static bool SetFilePath(ref FileModel file, IngredientModel ingredients)
+        private static bool SetFilePath(FileModel file, IngredientModel ingredients)
         {
             if (!file.IsValid() || !ingredients.IsValid(_requiredIngredients)) return false.Trail($"{nameof(SetFilePathStep)} validation failed.");
             var isValid = false;

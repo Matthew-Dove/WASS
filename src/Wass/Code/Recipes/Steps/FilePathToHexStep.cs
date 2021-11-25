@@ -6,10 +6,10 @@ namespace Wass.Code.Recipes.Steps
     public sealed class FilePathToHexStep : Step
     {
         internal FilePathToHexStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, IngredientModel ingredients) => FilePathToHex(ref file);
-        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
+        internal override bool Method(FileModel file, IngredientModel ingredients) => FilePathToHex(file);
+        internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool FilePathToHex(ref FileModel file)
+        private static bool FilePathToHex(FileModel file)
         {
             if (!file.IsValid()) return false.Trail($"{nameof(FilePathToHexStep)} validation failed.");
             var isValid = false;

@@ -19,9 +19,9 @@
         protected Step(bool isAsync) => IsAsync = isAsync;
 
         /// <summary>Returns true if the step completed successfully.</summary>
-        internal abstract bool Method(ref FileModel file, IngredientModel ingredients);
+        internal abstract bool Method(FileModel file, IngredientModel ingredients);
 
         /// <summary>Returns true if the step completed successfully.</summary>
-        internal abstract Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients);
+        internal abstract Task<bool> MethodAsync(FileModel file, IngredientModel ingredients);
     }
 }

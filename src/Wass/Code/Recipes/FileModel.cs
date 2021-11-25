@@ -2,7 +2,7 @@
 
 namespace Wass.Code.Recipes
 {
-    internal readonly struct FileModel
+    internal sealed class FileModel
     {
         /// <summary>The file's data (raw bytes may have been transformed e.g. compressed / encrypted.</summary>
         public byte[] Data { get; }
