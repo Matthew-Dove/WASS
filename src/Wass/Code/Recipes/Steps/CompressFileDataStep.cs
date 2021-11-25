@@ -25,7 +25,7 @@ namespace Wass.Code.Recipes.Steps
                 Log.Error(ex, nameof(CompressFileDataStep));
             }
 
-            return isValid;
+            return isValid.Trail(x => $"Is {nameof(CompressFileDataStep)} Valid: {x}.");
         }
     }
 }

@@ -33,7 +33,7 @@ namespace Wass.Code.Recipes.Steps
                 Log.Error(ex, nameof(FilePathToHexStep));
             }
 
-            return isValid;
+            return isValid.Trail(x => $"Is {nameof(FilePathToHexStep)} Valid: {x}.");
         }
     }
 }

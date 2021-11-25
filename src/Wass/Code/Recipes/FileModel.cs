@@ -66,10 +66,10 @@ namespace Wass.Code.Recipes
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error splitting file path into location, name, and extension.");
+                Log.Error(ex, $"Error splitting file path into location, name, and extension: [{path}].");
             }
 
-            return isValid;
+            return isValid.Trail(x => $"Was {nameof(TrySplitPath)} from {nameof(FileModelExtensions)} successful: {x}.");
         }
     }
 }

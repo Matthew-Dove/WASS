@@ -26,7 +26,7 @@ namespace Wass.Code.Recipes.Steps
                 Log.Error(ex, nameof(EncryptFileDataStep));
             }
 
-            return isValid;
+            return isValid.Trail(x => $"Is {nameof(EncryptFileDataStep)} Valid: {x}.");
         }
     }
 }

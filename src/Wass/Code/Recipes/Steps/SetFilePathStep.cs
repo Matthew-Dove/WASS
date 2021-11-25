@@ -41,7 +41,7 @@ namespace Wass.Code.Recipes.Steps
                 Log.Error(ex, nameof(SetFilePathStep));
             }
 
-            return isValid;
+            return isValid.Trail(x => $"Is {nameof(SetFilePathStep)} Valid: {x}.");
         }
     }
 }
