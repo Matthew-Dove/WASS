@@ -26,9 +26,10 @@ namespace Wass.Code.Recipes.Steps
                 var name = Encoding.UTF8.GetString(nameBytes);
                 var extension = Encoding.UTF8.GetString(extensionBytes);
 
-                file = file.WithLocation(location);
-                file = file.WithName(name);
-                file = file.WithExtension(extension);
+                file = file
+                    .WithLocation(location)
+                    .WithName(name)
+                    .WithExtension(extension);
 
                 isValid = true;
             }

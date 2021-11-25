@@ -5,16 +5,16 @@ namespace Wass.Code.Recipes
     internal sealed class FileModel
     {
         /// <summary>The file's data (raw bytes may have been transformed e.g. compressed / encrypted.</summary>
-        public byte[] Data { get; }
+        public byte[] Data { get; private set; }
 
         /// <summary>The file's relative location: "/backup/docs".</summary>
-        public string Location { get; }
+        public string Location { get; private set; }
 
         /// <summary>The file's name: "birthdays".</summary>
-        public string Name { get; }
+        public string Name { get; private set; }
 
         /// <summary>The file's extension: "txt".</summary>
-        public string Extension { get; }
+        public string Extension { get; private set; }
 
         public FileModel(byte[] data, string location, string name, string extension)
         {
@@ -23,18 +23,19 @@ namespace Wass.Code.Recipes
             Name = name;
             Extension = extension;
         }
+
+        public FileModel WithData(byte[] data) { Data = data; return this; }
+        public FileModel WithLocation(string location) { Location = location; return this; }
+        public FileModel WithName(string name) { Name = name; return this; }
+        public FileModel WithExtension(string extension) { Extension = extension; return this; }
     }
 
     internal static class FileModelExtensions
     {
-        public static FileModel WithData(this FileModel file, byte[] data) => new(data, file.Location, file.Name, file.Extension);
-        public static FileModel WithLocation(this FileModel file, string location) => new (file.Data, location, file.Name, file.Extension);
-        public static FileModel WithName(this FileModel file, string name) => new (file.Data, file.Location, name, file.Extension);
-        public static FileModel WithExtension(this FileModel file, string extension) => new (file.Data, file.Location, file.Name, extension);
-
         public static bool IsValid(this FileModel file)
         {
             return
+                file != null &&
                 file.Data != null &&
                 file.Data.Length > 0 &&
                 !string.IsNullOrEmpty(file.Location) &&

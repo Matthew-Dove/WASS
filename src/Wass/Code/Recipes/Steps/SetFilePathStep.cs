@@ -30,9 +30,11 @@ namespace Wass.Code.Recipes.Steps
 
                 if (path.TrySplitPath(out (string Location, string Name, string Extension) splitPath))
                 {
-                    file = file.WithLocation(splitPath.Location);
-                    file = file.WithName(splitPath.Name);
-                    file = file.WithExtension(splitPath.Extension);
+                    file = file
+                        .WithLocation(splitPath.Location)
+                        .WithName(splitPath.Name)
+                        .WithExtension(splitPath.Extension);
+
                     isValid = true;
                 }
             }

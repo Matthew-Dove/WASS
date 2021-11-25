@@ -20,9 +20,10 @@ namespace Wass.Code.Recipes.Steps
                 var name = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
                 var extension = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
 
-                file = file.WithLocation(location);
-                file = file.WithName(name);
-                file = file.WithExtension(extension);
+                file = file
+                    .WithLocation(location)
+                    .WithName(name)
+                    .WithExtension(extension);
 
                 isValid = true;
             }
