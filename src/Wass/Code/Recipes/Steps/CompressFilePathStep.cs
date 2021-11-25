@@ -1,5 +1,4 @@
-﻿using System.Collections.Specialized;
-using System.Text;
+﻿using System.Text;
 using Wass.Code.Compression;
 using Wass.Code.Infrastructure;
 
@@ -7,11 +6,11 @@ namespace Wass.Code.Recipes.Steps
 {
     public sealed class CompressFilePathStep : Step
     {
-        public CompressFilePathStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, ListDictionary ingredients) => CompressFilePath(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, ListDictionary ingredients) => throw new NotImplementedException();
+        internal CompressFilePathStep() : base(isAsync: false) { }
+        internal override bool Method(ref FileModel file, IngredientModel ingredients) => CompressFilePath(ref file);
+        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool CompressFilePath(ref FileModel file, ListDictionary ingredients)
+        private static bool CompressFilePath(ref FileModel file)
         {
             if (!file.IsValid()) return false.Trail($"{nameof(CompressFilePathStep)} validation failed.");
             var isValid = false;
@@ -19,8 +18,8 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Path));
-                file = file.WithPath(Encoding.UTF8.GetString(compressedBytes));
+                compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Location));
+                file = file.WithLocation(Encoding.UTF8.GetString(compressedBytes));
 
                 compressedBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Name));
                 file = file.WithName(Encoding.UTF8.GetString(compressedBytes));

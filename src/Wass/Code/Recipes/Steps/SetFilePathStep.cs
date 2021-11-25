@@ -1,23 +1,40 @@
-﻿using System.Collections.Specialized;
-using Wass.Code.Infrastructure;
+﻿using Wass.Code.Infrastructure;
 
 namespace Wass.Code.Recipes.Steps
 {
     public sealed class SetFilePathStep : Step
     {
-        public SetFilePathStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, ListDictionary ingredients) => SetFilePath(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, ListDictionary ingredients) => throw new NotImplementedException();
+        internal SetFilePathStep() : base(isAsync: false) { }
+        internal override bool Method(ref FileModel file, IngredientModel ingredients) => SetFilePath(ref file, ingredients);
+        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool SetFilePath(ref FileModel file, ListDictionary ingredients)
+        private static readonly string[] _requiredIngredients = { "path" };
+
+        private static bool SetFilePath(ref FileModel file, IngredientModel ingredients)
         {
-            if (!file.IsValid()) return false.Trail($"{nameof(SetFilePathStep)} validation failed.");
+            if (!file.IsValid() || !ingredients.IsValid(_requiredIngredients)) return false.Trail($"{nameof(SetFilePathStep)} validation failed.");
             var isValid = false;
-            string path = file.Path, name = file.Name, extension = file.Extension;
+            var path = ingredients["path"];
 
             try
             {
-                isValid = true;
+                if (path.Contains("{{") && path.Contains("}}"))
+                {
+                    var currentPath = file.GetPath();
+                    path = path
+                        .Replace("{{location}}", file.Location)
+                        .Replace("{{name}}", file.Name)
+                        .Replace("{{extension}}", file.Extension)
+                        .Trail(newPath => $"Changing the file's path from [{currentPath}], to [{newPath}] in {nameof(SetFilePathStep)}.");
+                }
+
+                if (path.TrySplitPath(out (string Location, string Name, string Extension) splitPath))
+                {
+                    file = file.WithLocation(splitPath.Location);
+                    file = file.WithName(splitPath.Name);
+                    file = file.WithExtension(splitPath.Extension);
+                    isValid = true;
+                }
             }
             catch (Exception ex)
             {

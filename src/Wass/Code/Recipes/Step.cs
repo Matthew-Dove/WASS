@@ -1,6 +1,4 @@
-﻿using System.Collections.Specialized;
-
-namespace Wass.Code.Recipes
+﻿namespace Wass.Code.Recipes
 {
     /**
      * One or more steps make up a recipe.
@@ -21,9 +19,9 @@ namespace Wass.Code.Recipes
         protected Step(bool isAsync) => IsAsync = isAsync;
 
         /// <summary>Returns true if the step completed successfully.</summary>
-        internal abstract bool Method(ref FileModel file, ListDictionary ingredients);
+        internal abstract bool Method(ref FileModel file, IngredientModel ingredients);
 
         /// <summary>Returns true if the step completed successfully.</summary>
-        internal abstract Task<bool> MethodAsync(ref FileModel file, ListDictionary ingredients);
+        internal abstract Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients);
     }
 }

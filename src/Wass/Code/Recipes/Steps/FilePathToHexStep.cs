@@ -1,16 +1,15 @@
-﻿using System.Collections.Specialized;
-using System.Text;
+﻿using System.Text;
 using Wass.Code.Infrastructure;
 
 namespace Wass.Code.Recipes.Steps
 {
     public sealed class FilePathToHexStep : Step
     {
-        public FilePathToHexStep() : base(isAsync: false) { }
-        internal override bool Method(ref FileModel file, ListDictionary ingredients) => FilePathToHex(ref file, ingredients);
-        internal override Task<bool> MethodAsync(ref FileModel file, ListDictionary ingredients) => throw new NotImplementedException();
+        internal FilePathToHexStep() : base(isAsync: false) { }
+        internal override bool Method(ref FileModel file, IngredientModel ingredients) => FilePathToHex(ref file);
+        internal override Task<bool> MethodAsync(ref FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
 
-        private static bool FilePathToHex(ref FileModel file, ListDictionary ingredients)
+        private static bool FilePathToHex(ref FileModel file)
         {
             if (!file.IsValid()) return false.Trail($"{nameof(FilePathToHexStep)} validation failed.");
             var isValid = false;
@@ -18,8 +17,8 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Path));
-                file = file.WithPath(hex);
+                hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Location));
+                file = file.WithLocation(hex);
 
                 hex = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
                 file = file.WithName(hex);
