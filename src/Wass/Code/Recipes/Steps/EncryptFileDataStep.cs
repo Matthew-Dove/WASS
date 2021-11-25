@@ -7,8 +7,8 @@ namespace Wass.Code.Recipes.Steps
     public sealed class EncryptFileDataStep : Step
     {
         public EncryptFileDataStep() : base(isAsync: false) { }
-        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
         internal override bool Method(ref IngredientModel ingredients) => EncryptFileData(ref ingredients);
+        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
 
         private static bool EncryptFileData(ref IngredientModel ingredients)
         {

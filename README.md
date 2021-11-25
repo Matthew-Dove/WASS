@@ -9,6 +9,13 @@ Like a NAS (*Network Attached Storage*), but with a web focus.
 The extra **S** in WAS**S**, is so the pronunciation is the same as NAS.  
 WASS aims to be your backup, and access solution for your private files.  
 
+## Steps
+
+A recipe is complied from a list of steps, which controls what happens to files presented to WASS.  
+A step can be sync, or async; and they perform some kind of operation on the file.  
+For example, you might change the file's name, or encrypt the file's data etc.  
+
+
 # Credits
 * [Icon](https://www.flaticon.com/free-icon/bird_2630452) made by [Vitaly Gorbachev](https://www.flaticon.com/authors/vitaly-gorbachev) from [Flaticon](https://www.flaticon.com/).
 

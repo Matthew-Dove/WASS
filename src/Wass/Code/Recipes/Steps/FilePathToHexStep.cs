@@ -6,8 +6,8 @@ namespace Wass.Code.Recipes.Steps
     public sealed class FilePathToHexStep : Step
     {
         public FilePathToHexStep() : base(isAsync: false) { }
-        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
         internal override bool Method(ref IngredientModel ingredients) => FilePathToHex(ref ingredients);
+        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
 
         private static bool FilePathToHex(ref IngredientModel ingredients)
         {

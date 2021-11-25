@@ -6,8 +6,8 @@ namespace Wass.Code.Recipes.Steps
     public sealed class CompressFileDataStep : Step
     {
         public CompressFileDataStep() : base(isAsync: false) { }
-        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
         internal override bool Method(ref IngredientModel ingredients) => CompressFileData(ref ingredients);
+        internal override Task<bool> MethodAsync(ref IngredientModel ingredients) => throw new NotImplementedException();
 
         private static bool CompressFileData(ref IngredientModel ingredients)
         {

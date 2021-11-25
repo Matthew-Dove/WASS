@@ -5,13 +5,13 @@
         /// <summary>The file's data (raw bytes may have been transformed e.g. compressed / encrypted.).</summary>
         public byte[] Data { get; }
 
-        /// <summary>The file's desired path: "C:\personal\docs".</summary>
+        /// <summary>The file's path: "C:\personal\docs".</summary>
         public string Path { get; }
 
-        /// <summary>The file's desired name: "birthdays".</summary>
+        /// <summary>The file's name: "birthdays".</summary>
         public string Name { get; }
 
-        /// <summary>The file's desired extension: "txt".</summary>
+        /// <summary>The file's extension: "txt".</summary>
         public string Extension { get; }
 
         public IngredientModel(byte[] data, string path, string name, string extension)
