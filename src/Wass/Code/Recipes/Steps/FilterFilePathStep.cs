@@ -36,12 +36,11 @@ namespace Wass.Code.Recipes.Steps
 
                     if (target != string.Empty)
                     {
-                        var regularExpression = new Regex(regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-                        var matches = regularExpression.Matches(target);
+                        var matches = Regex.Match(regex, target, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                         var keepFile = (matchBehaviour.ToUpperInvariant() switch
                         {
-                            "INCLUDE" => matches.Count > 0,
-                            "EXCLUDE" => matches.Count == 0,
+                            "INCLUDE" => matches.Success,
+                            "EXCLUDE" => !matches.Success,
                             _ => false
                         }).Trail(x => $"Did {nameof(FilterFilePathStep)} decide to keep the file: {x}.");
                         if (!keepFile) file = file.WithData(Array.Empty<byte>());
