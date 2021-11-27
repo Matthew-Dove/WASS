@@ -18,16 +18,16 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                var locationBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Location));
+                var directoryBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Directory));
                 var nameBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Name));
                 var extensionBytes = Aes.Encrypt(Config.Encryption.Password, Encoding.UTF8.GetBytes(file.Extension));
 
-                var location = Encoding.UTF8.GetString(locationBytes);
+                var directory = Encoding.UTF8.GetString(directoryBytes);
                 var name = Encoding.UTF8.GetString(nameBytes);
                 var extension = Encoding.UTF8.GetString(extensionBytes);
 
                 file = file
-                    .WithLocation(location)
+                    .WithDirectory(directory)
                     .WithName(name)
                     .WithExtension(extension);
 

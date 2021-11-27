@@ -16,12 +16,12 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                var location = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Location));
+                var directory = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Directory));
                 var name = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
                 var extension = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
 
                 file = file
-                    .WithLocation(location)
+                    .WithDirectory(directory)
                     .WithName(name)
                     .WithExtension(extension);
 

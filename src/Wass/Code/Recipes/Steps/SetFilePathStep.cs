@@ -22,16 +22,16 @@ namespace Wass.Code.Recipes.Steps
                 {
                     var currentPath = file.GetPath();
                     path = path
-                        .Replace("{{location}}", file.Location)
+                        .Replace("{{directory}}", file.Directory)
                         .Replace("{{name}}", file.Name)
                         .Replace("{{extension}}", file.Extension)
                         .Trail(newPath => $"Changing the file's path from [{currentPath}], to [{newPath}] in {nameof(SetFilePathStep)}.");
                 }
 
-                if (path.TrySplitPath(out (string Location, string Name, string Extension) splitPath))
+                if (path.TrySplitPath(out (string Directory, string Name, string Extension) splitPath))
                 {
                     file = file
-                        .WithLocation(splitPath.Location)
+                        .WithDirectory(splitPath.Directory)
                         .WithName(splitPath.Name)
                         .WithExtension(splitPath.Extension);
 

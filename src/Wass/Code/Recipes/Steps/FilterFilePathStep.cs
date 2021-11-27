@@ -21,14 +21,14 @@ namespace Wass.Code.Recipes.Steps
             {
                 string
                     matchBehaviour = match.IsEqualTo("include", "exclude") ? match :string.Empty,
-                    searchArea = search.IsEqualTo("path", "location", "name", "extension") ? search : string.Empty;
+                    searchArea = search.IsEqualTo("path", "directory", "name", "extension") ? search : string.Empty;
 
                 if (matchBehaviour != string.Empty && searchArea != string.Empty)
                 {
                     var target = searchArea.ToUpperInvariant() switch
                     {
                         "PATH" => file.GetPath(),
-                        "LOCATION" => file.Location,
+                        "DIRECTORY" => file.Directory,
                         "NAME" => file.Name,
                         "EXTENSION" => file.Extension,
                         _ => string.Empty

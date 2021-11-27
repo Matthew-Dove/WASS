@@ -15,7 +15,7 @@ namespace Tests.Wass.Code.Steps
         {
             _file = new FileModel(
                 data: new byte[1] { 0 },
-                location: @"C:\Backup\Pictures\Family",
+                directory: @"C:\Backup\Pictures\Family",
                 name: @"Christmas",
                 extension: "jpg"
             );
