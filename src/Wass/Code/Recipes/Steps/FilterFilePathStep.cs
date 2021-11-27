@@ -23,14 +23,14 @@ namespace Wass.Code.Recipes.Steps
                     matchBehaviour = match.IsEqualTo("include", "exclude") ? match :string.Empty,
                     searchArea = search.IsEqualTo("path", "directory", "name", "extension") ? search : string.Empty;
 
-                if (matchBehaviour != string.Empty && searchArea != string.Empty)
+                if (matchBehaviour != string.Empty && searchArea != string.Empty && file.Path.TrySplitPath(out (string Directory, string Name, string Extension) splitPath))
                 {
                     var target = searchArea.ToUpperInvariant() switch
                     {
-                        "PATH" => file.GetPath(),
-                        "DIRECTORY" => file.Directory,
-                        "NAME" => file.Name,
-                        "EXTENSION" => file.Extension,
+                        "PATH" => file.Path,
+                        "DIRECTORY" => splitPath.Directory,
+                        "NAME" => splitPath.Name,
+                        "EXTENSION" => splitPath.Extension,
                         _ => string.Empty
                     };
 

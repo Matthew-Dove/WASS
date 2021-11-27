@@ -16,15 +16,8 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                var directory = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Directory));
-                var name = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
-                var extension = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Name));
-
-                file = file
-                    .WithDirectory(directory)
-                    .WithName(name)
-                    .WithExtension(extension);
-
+                var path = Convert.ToHexString(Encoding.UTF8.GetBytes(file.Path));
+                file = file.WithPath(path);
                 isValid = true;
             }
             catch (Exception ex)

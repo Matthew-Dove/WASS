@@ -7,27 +7,21 @@ namespace Wass.Code.Recipes
         /// <summary>The file's data (raw bytes may have been transformed e.g. compressed / encrypted.</summary>
         public byte[] Data { get; private set; }
 
-        /// <summary>The file's directory: "C:\backup\docs".</summary>
-        public string Directory { get; private set; }
+        /// <summary>The file's full path (directory + name + extension).</summary>
+        public string Path { get; set; }
 
-        /// <summary>The file's name: "birthdays".</summary>
-        public string Name { get; private set; }
-
-        /// <summary>The file's extension: "txt".</summary>
-        public string Extension { get; private set; }
-
-        public FileModel(byte[] data, string directory, string name, string extension)
+        public FileModel(byte[] data, string path)
         {
+            if (data == null || data.Length < 1) throw new ArgumentException("Length must be greater than 0.", nameof(data));
+            if (string.IsNullOrEmpty(path)) throw new ArgumentException("Length must be greater than 0.", nameof(path));
+            if (!path.TrySplitPath(out var sp) || (string.IsNullOrEmpty(sp.Item1) || string.IsNullOrEmpty(sp.Item2) || string.IsNullOrEmpty(sp.Item3))) throw new ArgumentException("Must contain file's directory, name, and extension.", nameof(path));
+
             Data = data;
-            Directory = directory;
-            Name = name;
-            Extension = extension;
+            Path = path;
         }
 
         public FileModel WithData(byte[] data) { Data = data; return this; }
-        public FileModel WithDirectory(string directory) { Directory = directory; return this; }
-        public FileModel WithName(string name) { Name = name; return this; }
-        public FileModel WithExtension(string extension) { Extension = extension; return this; }
+        public FileModel WithPath(string path) { Path = path; return this; }
     }
 
     internal static class FileModelExtensions
@@ -36,14 +30,9 @@ namespace Wass.Code.Recipes
         {
             return
                 file != null &&
-                file.Data != null &&
                 file.Data.Length > 0 &&
-                !string.IsNullOrEmpty(file.Directory) &&
-                !string.IsNullOrEmpty(file.Name) &&
-                !string.IsNullOrEmpty(file.Extension);
+                !string.IsNullOrEmpty(file.Path);
         }
-
-        public static string GetPath(this FileModel file) => file.Directory + Path.DirectorySeparatorChar + file.Name + "." + file.Extension;
 
         public static bool TrySplitPath(this string path, out (string, string, string) splitPath)
         {

@@ -18,23 +18,20 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                if (path.Contains("{{") && path.Contains("}}"))
+                var currentPath = file.Path;
+                if (path.Contains("{{") && path.Contains("}}") && file.Path.TrySplitPath(out (string Directory, string Name, string Extension) splitPath))
                 {
-                    var currentPath = file.GetPath();
                     path = path
-                        .Replace("{{directory}}", file.Directory)
-                        .Replace("{{name}}", file.Name)
-                        .Replace("{{extension}}", file.Extension)
-                        .Trail(newPath => $"Changing the file's path from [{currentPath}], to [{newPath}] in {nameof(SetFilePathStep)}.");
+                        .Replace("{{directory}}", splitPath.Directory)
+                        .Replace("{{name}}", splitPath.Name)
+                        .Replace("{{extension}}", splitPath.Extension)
+                        .Trail(x => $"Changing the file's path from [{file.Path}], to [{x}] in {nameof(SetFilePathStep)}.");
                 }
 
-                if (path.TrySplitPath(out (string Directory, string Name, string Extension) splitPath))
+                if (path.TrySplitPath(out (string Directory, string Name, string Extension) sp))
                 {
-                    file = file
-                        .WithDirectory(splitPath.Directory)
-                        .WithName(splitPath.Name)
-                        .WithExtension(splitPath.Extension);
-
+                    path = sp.Directory + Path.DirectorySeparatorChar + sp.Name + sp.Extension;
+                    file = file.WithPath(path);
                     isValid = true;
                 }
             }

@@ -17,19 +17,9 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                var directoryBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Directory));
-                var nameBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Name));
-                var extensionBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Extension));
-
-                var directory = Encoding.UTF8.GetString(directoryBytes);
-                var name = Encoding.UTF8.GetString(nameBytes);
-                var extension = Encoding.UTF8.GetString(extensionBytes);
-
-                file = file
-                    .WithDirectory(directory)
-                    .WithName(name)
-                    .WithExtension(extension);
-
+                var pathBytes = GZip.Compress(Encoding.UTF8.GetBytes(file.Path));
+                var path = Encoding.UTF8.GetString(pathBytes);
+                file = file.WithPath(path);
                 isValid = true;
             }
             catch (Exception ex)
