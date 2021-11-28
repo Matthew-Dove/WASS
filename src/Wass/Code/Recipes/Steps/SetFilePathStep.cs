@@ -30,7 +30,7 @@ namespace Wass.Code.Recipes.Steps
 
                 if (path.TrySplitPath(out (string Directory, string Name, string Extension) sp))
                 {
-                    path = sp.Directory + Path.DirectorySeparatorChar + sp.Name + sp.Extension;
+                    path = Path.Combine(sp.Directory, sp.Name) + sp.Extension;
                     file = file.WithPath(path);
                     isValid = true;
                 }

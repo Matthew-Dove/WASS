@@ -46,8 +46,6 @@ namespace Wass.Code.Recipes
                     name = Path.GetFileNameWithoutExtension(path),
                     extension = Path.GetExtension(path);
 
-                if (extension != null && extension.StartsWith('.')) extension = extension[1..];
-
                 if (!string.IsNullOrEmpty(directory) && !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(extension))
                 {
                     splitPath = (directory, name, extension);

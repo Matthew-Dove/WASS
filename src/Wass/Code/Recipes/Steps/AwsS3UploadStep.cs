@@ -27,7 +27,10 @@ namespace Wass.Code.Recipes.Steps
             {
                 if (storage.IsEqualTo(_storageClasses) && bucket.IsBucketValid())
                 {
-                    isValid = await S3.Upload(bucket, file.Path, file.Data, S3StorageClass.FindValue(storage));
+                    if (await S3.CreateBucket(bucket))
+                    {
+                        isValid = await S3.Upload(bucket, file.Path, file.Data, S3StorageClass.FindValue(storage));
+                    }
                 }
             }
             catch (Exception ex)

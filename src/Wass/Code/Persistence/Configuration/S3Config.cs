@@ -26,11 +26,27 @@ namespace Wass.Code.Persistence.Configuration
         {
             return
                 config != null &&
-                !string.IsNullOrEmpty(config.AccessKeyId) &&
-                !string.IsNullOrEmpty(config.SecretAccessKey) &&
+                !string.IsNullOrEmpty(config.GetAccessKeyId()) &&
+                !string.IsNullOrEmpty(config.GetSecretAccessKey()) &&
                 !string.IsNullOrEmpty(config.Region) &&
                 _regions.Contains(config.Region) &&
                 IsBucketValid(config.Bucket);
+        }
+
+        public static string GetAccessKeyId(this S3Config config)
+        {
+            return
+                string.IsNullOrEmpty(config?.AccessKeyId) ?
+                Environment.GetEnvironmentVariable("WASS_AWS_S3_AccessKeyId", EnvironmentVariableTarget.User) :
+                config.AccessKeyId;
+        }
+
+        public static string GetSecretAccessKey(this S3Config config)
+        {
+            return
+                string.IsNullOrEmpty(config?.AccessKeyId) ?
+                Environment.GetEnvironmentVariable("WASS_AWS_S3_SecretAccessKey", EnvironmentVariableTarget.User) :
+                config.SecretAccessKey;
         }
 
         /**
