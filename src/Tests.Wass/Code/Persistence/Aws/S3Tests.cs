@@ -30,7 +30,7 @@ namespace Tests.Wass.Code.Persistence.Aws
 
         [Ignore]
         [TestMethod]
-        public async Task MyTest()
+        public async Task Test()
         {
             await S3.CreateBucket(_bucket);
             var data = File.ReadAllBytes($"./{_key}");
