@@ -3,7 +3,16 @@ using Wass.Code.Infrastructure;
 
 namespace Wass.Code.Recipes
 {
-    public sealed class IngredientModel : StringDictionary { }
+    public sealed class IngredientModel
+    {
+        private readonly StringDictionary _ingredients = new();
+
+        public string this[string key] { get { return _ingredients[key]; } set { _ingredients[key] = value; } }
+
+        public void Add(string key, string value) => _ingredients.Add(key, value);
+
+        public int Count => _ingredients.Count;
+    }
 
     internal static class IngredientModelExtensions
     {
