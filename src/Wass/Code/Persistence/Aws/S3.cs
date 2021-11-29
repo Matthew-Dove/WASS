@@ -40,10 +40,10 @@ namespace Wass.Code.Persistence.Aws
                 StorageClass = storageClass,
                 BucketKeyEnabled = true,
                 MD5Digest = md5Hash,
-                StreamTransferProgress = (_, e) => Log.Trace($"S3 file transfer progress for {key}: {e.PercentDone}%.")
+                StreamTransferProgress = (_, e) => Log.Trace($"S3 file transfer progress for [{key}]: {e.PercentDone}%.")
             };
 
-            var result = (await _client.PutObjectAsync(request)).Trail(x => $"Upload status to S3 for {key}: {x.HttpStatusCode}.");
+            var result = (await _client.PutObjectAsync(request)).Trail(x => $"Upload status to S3 for [{key}]: {x.HttpStatusCode}.");
             return result.HttpStatusCode == HttpStatusCode.OK;
         }
 

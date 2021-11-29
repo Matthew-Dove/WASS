@@ -25,11 +25,12 @@ namespace Wass.Code.Recipes.Steps
 
             try
             {
-                if (storage.IsEqualTo(_storageClasses) && bucket.IsBucketValid())
+                var path = file.Path.GetNormalisedPath().Trail(x => $"Normalising file path from [{file.Path}], to [{x}] for S3 upload.");
+                if (storage.IsEqualTo(_storageClasses) && bucket.IsBucketValid() && !string.IsNullOrEmpty(path))
                 {
                     if (await S3.CreateBucket(bucket))
                     {
-                        isValid = await S3.Upload(bucket, file.Path, file.Data, S3StorageClass.FindValue(storage));
+                        isValid = await S3.Upload(bucket, path, file.Data, S3StorageClass.FindValue(storage));
                     }
                 }
             }

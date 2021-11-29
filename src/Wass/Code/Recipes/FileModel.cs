@@ -34,6 +34,15 @@ namespace Wass.Code.Recipes
                 !string.IsNullOrEmpty(file.Path);
         }
 
+        /// <summary>Removes the path root, and sets directory seperators to "/".</summary>
+        public static string GetNormalisedPath(this string path)
+        {
+            path = path.Substring(Path.GetPathRoot(path).Length).Replace('\\', '/');
+            if (path.StartsWith("./")) path = path.Substring("./".Length);
+            if (path.StartsWith("/")) path = path.Substring("/".Length);
+            return path;
+        }
+
         public static bool TrySplitPath(this string path, out (string, string, string) splitPath)
         {
             var isValid = false;
