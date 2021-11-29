@@ -9,7 +9,7 @@
      * Another recipe that moves files >= 1GB to S3 Glacier Deep Archive.
      * A recipe that moves movie files to your media server.
      * 
-     * Steps can do more things too, such as : compression, encryption, time delay, watch for new files, etc.
+     * Steps can do more things too, such as: compression, encryption, time delay, watch for new files, etc.
     **/
     public abstract class Step
     {

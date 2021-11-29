@@ -3,7 +3,7 @@ using Wass.Code.Infrastructure;
 
 namespace Wass.Code.Recipes
 {
-    internal sealed class IngredientModel : StringDictionary { }
+    public sealed class IngredientModel : StringDictionary { }
 
     internal static class IngredientModelExtensions
     {
