@@ -13,31 +13,25 @@ namespace Tests.Wass.Code.Steps
         private readonly string _path = @"Data/billy-jo-catbagan-PbS9rXhsYIU-unsplash.jpg";
         private readonly string _bucket = Path.GetRandomFileName().Replace(".", "").ToLower();
 
-        private FileModel _file;
-        private IngredientModel _ingredients;
-
-        [TestInitialize]
-        public void TestInitialize()
-        {
-            var data = File.ReadAllBytes($"./{_path}");
-            _file = new FileModel(
-                data: data,
-                path: _path
-            );
-
-            _ingredients = new IngredientModel
-            {
-                ["storage"] = "standard",
-                ["bucket"] = _bucket
-            };
-        }
-
         [Ignore]
         [TestMethod]
         public async Task Test()
         {
+            var data = File.ReadAllBytes($"./{_path}");
+            var file = new FileModel(
+                data: data,
+                path: _path
+            );
+
+            var ingredients = new IngredientModel
+            {
+                ["storage"] = "standard",
+                ["bucket"] = _bucket
+            };
+
             var step = new AwsS3UploadStep();
-            var result = await step.MethodAsync(_file, _ingredients);
+            var result = await step.MethodAsync(file, ingredients);
+
             Assert.IsTrue(result);
         }
     }
