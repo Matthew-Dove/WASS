@@ -40,6 +40,8 @@ namespace Wass.Code.Persistence.Aws
                 StorageClass = storageClass,
                 BucketKeyEnabled = true,
                 MD5Digest = md5Hash,
+                ObjectLockMode = default,
+                ObjectLockRetainUntilDate = default,
                 StreamTransferProgress = (_, e) => Log.Trace($"S3 file transfer progress for [{key}]: {e.PercentDone}%.")
             };
 
@@ -60,8 +62,8 @@ namespace Wass.Code.Persistence.Aws
             }
 
             // Create the bucket.
-            var result = await _client.PutBucketAsync(bucket);
-            if (result.HttpStatusCode == HttpStatusCode.OK)
+            var result = await _client.PutBucketAsync(new PutBucketRequest { BucketName = bucket });
+            if (result.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Creating new bucket in S3 [{bucket}], status: {x}."))
             {
                 _doesBucketExist.TryAdd(bucket, true);
                 return true;

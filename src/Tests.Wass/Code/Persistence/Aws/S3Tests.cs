@@ -4,13 +4,14 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Wass.Code.Persistence.Aws;
+using Wass.Code.Persistence.Configuration;
 
 namespace Tests.Wass.Code.Persistence.Aws
 {
     [TestClass]
     public class S3Tests
     {
-        private readonly string _bucket = Path.GetRandomFileName().Replace(".", "").ToLower();
+        private readonly string _bucket = string.Empty.GenerateBucketName();
 
         // Credit: Billy Jo Catbagan (https://unsplash.com/photos/PbS9rXhsYIU).
         private readonly string _key = @"Data/billy-jo-catbagan-PbS9rXhsYIU-unsplash.jpg";
@@ -24,8 +25,8 @@ namespace Tests.Wass.Code.Persistence.Aws
                 accessKeyId = "",
                 secretAccessKey = "";
 
-            Environment.SetEnvironmentVariable("WASS_AWS_S3_AccessKeyId", accessKeyId, EnvironmentVariableTarget.User);
-            Environment.SetEnvironmentVariable("WASS_AWS_S3_SecretAccessKey", secretAccessKey, EnvironmentVariableTarget.User);
+            Environment.SetEnvironmentVariable(S3Config.EnvironmentVariableAccessKeyId, accessKeyId, EnvironmentVariableTarget.User);
+            Environment.SetEnvironmentVariable(S3Config.EnvironmentVariableSecretAccessKey, secretAccessKey, EnvironmentVariableTarget.User);
         }
 
         [Ignore]
@@ -34,7 +35,7 @@ namespace Tests.Wass.Code.Persistence.Aws
         {
             await S3.CreateBucket(_bucket);
             var data = File.ReadAllBytes($"./{_key}");
-            var result = await S3.Upload(_bucket, _key, data, S3StorageClass.Standard);
+            var result = await S3.Upload(_bucket, _key, data, S3StorageClass.IntelligentTiering);
             Assert.IsTrue(result);
         }
     }

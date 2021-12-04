@@ -4,6 +4,7 @@ namespace Wass.Code.Recipes.Steps
 {
     public sealed class TimeDelayStep : Step
     {
+        internal override string Version => "1.0.0";
         internal TimeDelayStep() : base(isAsync: true) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => TimeDelay(file, ingredients);

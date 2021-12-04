@@ -6,6 +6,7 @@ namespace Wass.Code.Recipes.Steps
 {
     public sealed class EncryptFileDataStep : Step
     {
+        internal override string Version => "1.0.0";
         internal EncryptFileDataStep() : base(isAsync: false) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => EncryptFileData(file);
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();

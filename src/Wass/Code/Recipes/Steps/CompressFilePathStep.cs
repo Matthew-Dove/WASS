@@ -6,6 +6,7 @@ namespace Wass.Code.Recipes.Steps
 {
     public sealed class CompressFilePathStep : Step
     {
+        internal override string Version => "1.0.0";
         internal CompressFilePathStep() : base(isAsync: false) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => CompressFilePath(file);
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();

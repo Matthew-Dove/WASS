@@ -6,10 +6,13 @@ namespace Wass.Code.Persistence.Configuration
 {
     public sealed class S3Config
     {
+        public const string EnvironmentVariableAccessKeyId = "WASS_AWS_S3_AccessKeyId";
+        public const string EnvironmentVariableSecretAccessKey = "WASS_AWS_S3_SecretAccessKey";
+
         public string AccessKeyId { get; set; }
         public string SecretAccessKey { get; set; }
-        public string Region { get; set; } = "us-east-2"; // Ohio gets new features early (letting us-west-2 be the test bed), and is a cheap region; can be supplied per step.
-        public string Bucket { get; set; } = Path.GetRandomFileName().Replace(".", "").ToLower(); // Optional: bucket can be supplied per step.
+        public string Region { get; set; } = "us-east-2"; // Ohio gets new features early (letting us-west-2 be the test bed), and is a cheaper region.
+        public string Bucket { get; set; } = string.Empty.GenerateBucketName(); // Get a random bucket name if you don't explicitly set one.
     }
 
     internal static class S3ConfigExtensions
@@ -37,7 +40,7 @@ namespace Wass.Code.Persistence.Configuration
         {
             return
                 string.IsNullOrEmpty(config?.AccessKeyId) ?
-                Environment.GetEnvironmentVariable("WASS_AWS_S3_AccessKeyId", EnvironmentVariableTarget.User) :
+                Environment.GetEnvironmentVariable(S3Config.EnvironmentVariableAccessKeyId, EnvironmentVariableTarget.User) :
                 config.AccessKeyId;
         }
 
@@ -45,9 +48,11 @@ namespace Wass.Code.Persistence.Configuration
         {
             return
                 string.IsNullOrEmpty(config?.AccessKeyId) ?
-                Environment.GetEnvironmentVariable("WASS_AWS_S3_SecretAccessKey", EnvironmentVariableTarget.User) :
+                Environment.GetEnvironmentVariable(S3Config.EnvironmentVariableSecretAccessKey, EnvironmentVariableTarget.User) :
                 config.SecretAccessKey;
         }
+
+        public static string GenerateBucketName(this string _) => Path.GetRandomFileName().Replace(".", "").ToLower();
 
         /**
          * S3 Bucket Naming Requirements:

@@ -7,6 +7,7 @@ namespace Wass.Code.Recipes.Steps
 {
     public sealed class AwsS3UploadStep : Step
     {
+        internal override string Version => "1.0.0";
         internal AwsS3UploadStep() : base(isAsync: true) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => AwsS3Upload(file, ingredients);
@@ -21,7 +22,7 @@ namespace Wass.Code.Recipes.Steps
             var isValid = false;
             string
                 bucket = (ingredients["bucket"] ?? Config.S3.Bucket).ToLowerInvariant(),
-                storage = (ingredients["storage"] ?? "STANDARD").ToUpperInvariant();
+                storage = (ingredients["storage"] ?? "INTELLIGENT_TIERING").ToUpperInvariant();
 
             try
             {

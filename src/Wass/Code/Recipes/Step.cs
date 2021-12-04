@@ -15,6 +15,8 @@
     {
         internal bool IsAsync { get; }
 
+        internal abstract string Version { get; }
+
         /// <summary>When true the asynchronous method is called, otherwise the synchronous method will be invoked.</summary>
         protected Step(bool isAsync) => IsAsync = isAsync;
 
