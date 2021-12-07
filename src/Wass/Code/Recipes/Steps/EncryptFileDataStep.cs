@@ -13,12 +13,12 @@ namespace Wass.Code.Recipes.Steps
 
         private static bool EncryptFileData(FileModel file)
         {
-            if (!file.IsValid() || !Config.Encryption.IsValid()) return false.Trail($"{nameof(EncryptFileDataStep)} validation failed.");
+            if (!file.IsValid() || !Config.Security.IsValid()) return false.Trail($"{nameof(EncryptFileDataStep)} validation failed.");
             var isValid = false;
 
             try
             {
-                var cipherbytes = Aes.Encrypt(Config.Encryption.Password, file.Data);
+                var cipherbytes = Aes.Encrypt(Config.Security.Password, file.Data);
                 file = file.WithData(cipherbytes);
                 isValid = true;
             }
