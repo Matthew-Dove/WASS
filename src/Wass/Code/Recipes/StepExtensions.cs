@@ -38,5 +38,29 @@ namespace Wass.Code.Recipes
             }
             return false;
         }
+
+        public static string Guard(this string value)
+        {
+            if (string.IsNullOrEmpty(value)) throw new ArgumentException("Argument cannot be null, or empty.");
+            return value;
+        }
+
+        public static string Guard(this string value, string name)
+        {
+            if (string.IsNullOrEmpty(value)) throw new ArgumentException("Argument cannot be null, or empty.", name);
+            return value;
+        }
+
+        public static T Guard<T>(this T obj) where T : class
+        {
+            if (obj == null) throw new ArgumentNullException();
+            return obj;
+        }
+
+        public static T Guard<T>(this T obj, string name) where T : class
+        {
+            if (obj == null) throw new ArgumentNullException(name);
+            return obj;
+        }
     }
 }

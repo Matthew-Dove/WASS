@@ -8,7 +8,7 @@ namespace Wass.Code.Recipes
         public byte[] Data { get; private set; }
 
         /// <summary>The file's full path (directory + name + extension).</summary>
-        public string Path { get; set; }
+        public string Path { get; private set; }
 
         public FileModel(byte[] data, string path)
         {

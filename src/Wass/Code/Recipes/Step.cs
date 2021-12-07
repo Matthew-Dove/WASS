@@ -26,4 +26,11 @@
         /// <summary>Returns true if the step completed successfully.</summary>
         internal abstract Task<bool> MethodAsync(FileModel file, IngredientModel ingredients);
     }
+
+    public abstract class StorageStep : Step
+    {
+        protected StorageStep(bool isAsync) : base(isAsync) { }
+
+        internal abstract Task<bool> DoesFileExist(string filepath, IngredientModel ingredients);
+    }
 }

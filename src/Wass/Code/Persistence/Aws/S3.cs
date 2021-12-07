@@ -49,20 +49,47 @@ namespace Wass.Code.Persistence.Aws
             return result.HttpStatusCode == HttpStatusCode.OK;
         }
 
-        public static async ValueTask<bool> CreateBucket(string bucket)
+        public static async ValueTask<bool> DoesFileExist(string bucket, string key)
         {
-            // Check local cache.
+            var fileExists = false;
+
+            try
+            {
+                var result = await _client.GetObjectMetadataAsync(bucket, key);
+                if (result.HttpStatusCode == HttpStatusCode.OK)
+                {
+                    fileExists = false.Trail($"The file [{key}] was found in the bucket [{bucket}].");
+                }
+            }
+            catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
+            {
+                fileExists = false.Trail($"The key [{key}], does not exist in the bucket [{bucket}].");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, nameof(DoesFileExist));
+            }
+
+            return fileExists;
+        }
+
+        public static async ValueTask<bool> DoesBucketExist(string bucket)
+        {
             if (_doesBucketExist.ContainsKey(bucket)) { _doesBucketExist.TryGetValue(bucket, out var doesExist); return doesExist; }
 
-            // Check if bucket exists.
             if (await AmazonS3Util.DoesS3BucketExistV2Async(_client, bucket).Trail(x => $"Does AWS S3 bucket {bucket} exist: {x}."))
             {
                 _doesBucketExist.TryAdd(bucket, true);
                 return true;
             }
 
-            // Create the bucket.
+            return false;
+        }
+
+        public static async ValueTask<bool> CreateBucket(string bucket)
+        {
             var result = await _client.PutBucketAsync(new PutBucketRequest { BucketName = bucket });
+
             if (result.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Creating new bucket in S3 [{bucket}], status: {x}."))
             {
                 _doesBucketExist.TryAdd(bucket, true);
