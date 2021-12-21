@@ -27,6 +27,11 @@
         internal abstract Task<bool> MethodAsync(FileModel file, IngredientModel ingredients);
     }
 
+    /**
+     * Local HashStep: won't upload files with the same hash.
+     * Server HashStep: Checks if file hash is in a server folder "~/wass-hash", before atempting an upload.
+    **/
+
     public abstract class StorageStep : Step
     {
         protected StorageStep(bool isAsync) : base(isAsync) { }

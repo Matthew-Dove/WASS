@@ -29,7 +29,7 @@ namespace Tests.Wass.Code.Steps
                 ["bucket"] = _bucket
             };
 
-            var step = new AwsS3UploadStep();
+            var step = new AwsS3StorageStep();
             var result = await step.MethodAsync(file, ingredients);
 
             Assert.IsTrue(result);

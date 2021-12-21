@@ -5,10 +5,10 @@ using Wass.Code.Persistence.Configuration;
 
 namespace Wass.Code.Recipes.Steps
 {
-    public sealed class AwsS3UploadStep : StorageStep
+    public sealed class AwsS3StorageStep : StorageStep
     {
         internal override string Version => "1.0.0";
-        internal AwsS3UploadStep() : base(isAsync: true) { }
+        internal AwsS3StorageStep() : base(isAsync: true) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => AwsS3Upload(file, ingredients);
         internal override Task<bool> DoesFileExist(string filepath, IngredientModel ingredients) => FileExists(filepath, ingredients);
@@ -19,7 +19,7 @@ namespace Wass.Code.Recipes.Steps
 
         private static async Task<bool> AwsS3Upload(FileModel file, IngredientModel ingredients)
         {
-            if (!file.IsValid() || !ingredients.IsValid() || !Config.S3.IsValid()) return false.Trail($"{nameof(AwsS3UploadStep)} validation failed.");
+            if (!file.IsValid() || !ingredients.IsValid() || !Config.S3.IsValid()) return false.Trail($"{nameof(AwsS3StorageStep)} validation failed.");
             var isValid = false;
             string
                 bucket = (ingredients["bucket"] ?? Config.S3.Bucket).ToLowerInvariant(),
@@ -38,10 +38,10 @@ namespace Wass.Code.Recipes.Steps
             }
             catch (Exception ex)
             {
-                Log.Error(ex, nameof(AwsS3UploadStep));
+                Log.Error(ex, nameof(AwsS3StorageStep));
             }
 
-            return isValid.Trail(x => $"Is {nameof(AwsS3UploadStep)} Valid: {x}.");
+            return isValid.Trail(x => $"Is {nameof(AwsS3StorageStep)} Valid: {x}.");
         }
 
         private static async Task<bool> FileExists(string filepath, IngredientModel ingredients)
