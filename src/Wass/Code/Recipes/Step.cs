@@ -28,6 +28,7 @@
     }
 
     /**
+     * // TODO: 
      * Local HashStep: won't upload files with the same hash.
      * Server HashStep: Checks if file hash is in a server folder "~/wass-hash", before atempting an upload.
     **/

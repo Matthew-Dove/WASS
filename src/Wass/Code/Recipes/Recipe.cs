@@ -12,6 +12,7 @@
             _instructions = instructions;
         }
 
+        // TODO: 
         // I think we'll need a internal step to do a few things before saving data to external sources:
         // 1) Convert FileModel into a metadata object + hash.
         // 2) Ask the storage service if the hash already exists, and if so; skip the upload.
