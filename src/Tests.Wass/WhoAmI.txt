@@ -1,0 +1,3 @@
+﻿Test project for the Wass library.
+Contains a mixture of unit, and integration tests.
+Integration tests are mark with the [Ignore] attribute, so they don't execute everytime.
