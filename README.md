@@ -27,6 +27,14 @@ Some steps in a recipe may require special "ingredients".
 Think of these as parameters, or arguments to a function.  
 For example, you might define a algorithm to a hash step, or the storage tier for S3.  
 
+## TODO
+
+* `Wass.Cli` - global dotnet tool to administer WASS though the console.
+* `Wass.WebApp` - aws lambda to provide file access over the web, + [Progressive Web App](https://web.dev/add-manifest/) for moblie.
+* `Wass.SelfHost` - shares functionality from __Wass.WebApp__, and __Wass.Cli__ to run WASS locally.
+
+![wass-product-diagram](assets/images/wass-product-diagram.png)
+
 # Credits
 * [Icon](https://www.flaticon.com/free-icon/bird_2630452) made by [Vitaly Gorbachev](https://www.flaticon.com/authors/vitaly-gorbachev) from [Flaticon](https://www.flaticon.com/).
 
