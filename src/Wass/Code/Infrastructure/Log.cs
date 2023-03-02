@@ -1,4 +1,6 @@
-﻿namespace Wass.Code.Infrastructure
+﻿using Amazon.Runtime;
+
+namespace Wass.Code.Infrastructure
 {
     public static class Log
     {
@@ -31,11 +33,13 @@
             if (!string.IsNullOrEmpty(message)) Error(message);
             if (ex == null) return;
             Error(ex.ToString());
+            if (ex is AmazonServiceException se) Error($"AWS ErrorType: {se.ErrorType}, RequestId: {se.RequestId}.");
             if (ex is AggregateException ae)
             {
                 foreach (var e in ae.Flatten().InnerExceptions)
                 {
                     Error(e.ToString());
+                    if (e is AmazonServiceException ase) Error($"AWS ErrorType: {ase.ErrorType}, RequestId: {ase.RequestId}.");
                 }
             }
         }
