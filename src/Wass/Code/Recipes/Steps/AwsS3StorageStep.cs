@@ -11,7 +11,7 @@ namespace Wass.Code.Recipes.Steps
         internal AwsS3StorageStep() : base(isAsync: true) { }
         internal override bool Method(FileModel file, IngredientModel ingredients) => throw new NotImplementedException();
         internal override Task<bool> MethodAsync(FileModel file, IngredientModel ingredients) => AwsS3Upload(file, ingredients);
-        internal override Task<bool> DoesFileExist(string filepath, IngredientModel ingredients) => FileExists(filepath, ingredients);
+        internal override Task<bool?> DoesFileExist(string filepath, IngredientModel ingredients) => FileExists(filepath, ingredients);
 
         private static readonly string[] _storageClasses = new string[] {
             "DEEP_ARCHIVE", "GLACIER", "INTELLIGENT_TIERING", "STANDARD", "STANDARD_IA", "ONEZONE_IA"
@@ -44,11 +44,11 @@ namespace Wass.Code.Recipes.Steps
             return isValid.Trail(x => $"Is {nameof(AwsS3StorageStep)} Valid: {x}.");
         }
 
-        private static async Task<bool> FileExists(string filepath, IngredientModel ingredients)
+        private static async Task<bool?> FileExists(string filepath, IngredientModel ingredients)
         {
             filepath.Guard(nameof(filepath));
             if (!ingredients.IsValid() || !Config.S3.IsValid()) return false.Trail($"{nameof(FileExists)} validation failed.");
-            var isValid = false;
+            bool? exists = null;
             string bucket = (ingredients["bucket"] ?? Config.S3.Bucket).ToLowerInvariant();
 
             try
@@ -56,7 +56,8 @@ namespace Wass.Code.Recipes.Steps
                 var path = filepath.GetNormalisedPath();
                 if (bucket.IsBucketValid() && !string.IsNullOrEmpty(path))
                 {
-                    isValid = await S3.DoesBucketExist(bucket) && await S3.DoesFileExist(bucket, path);
+                    exists = await S3.DoesBucketExist(bucket) && await S3.DoesFileExist(bucket, path);
+                    exists.Trail(x => $"Does the file [{filepath}], exist for the [{nameof(AwsS3StorageStep)}]: {x}.");
                 }
             }
             catch (Exception ex)
@@ -64,7 +65,7 @@ namespace Wass.Code.Recipes.Steps
                 Log.Error(ex, nameof(FileExists));
             }
 
-            return isValid.Trail(x => $"Is {nameof(FileExists)} Valid: {x}.");
+            return exists.Trail(x => $"Is {nameof(FileExists)} Valid: {x.HasValue}.");
         }
     }
 }

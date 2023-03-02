@@ -28,12 +28,13 @@
     }
 
     /**
-     * HashStep: Checks if file hash is in a server folder i.e. "~/wass-hash", before attempting an upload.
+     * HashStep: Checks if the file is in a server folder i.e. "~/wass-hash", before attempting an upload.
     **/
     public abstract class StorageStep : Step
     {
         protected StorageStep(bool isAsync) : base(isAsync) { }
 
-        internal abstract Task<bool> DoesFileExist(string filepath, IngredientModel ingredients);
+        /// <summary>Returns true if the file exists, or null if an error was encountered.</summary>
+        internal abstract Task<bool?> DoesFileExist(string filepath, IngredientModel ingredients);
     }
 }

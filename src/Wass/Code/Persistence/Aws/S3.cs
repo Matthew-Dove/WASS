@@ -58,7 +58,7 @@ namespace Wass.Code.Persistence.Aws
                 var result = await _client.GetObjectMetadataAsync(bucket, key);
                 if (result.HttpStatusCode == HttpStatusCode.OK)
                 {
-                    fileExists = false.Trail($"The file [{key}] was found in the bucket [{bucket}].");
+                    fileExists = true.Trail($"The file [{key}] was found in the bucket [{bucket}].");
                 }
             }
             catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
@@ -77,8 +77,14 @@ namespace Wass.Code.Persistence.Aws
         {
             if (_doesBucketExist.ContainsKey(bucket)) { _doesBucketExist.TryGetValue(bucket, out var doesExist); return doesExist; }
 
-            if (await AmazonS3Util.DoesS3BucketExistV2Async(_client, bucket).Trail(x => $"Does AWS S3 bucket {bucket} exist: {x}."))
+            if (await AmazonS3Util.DoesS3BucketExistV2Async(_client, bucket).Trail(x => $"Does AWS S3 bucket [{bucket}] exist: {x}."))
             {
+                var version = (await _client.GetBucketVersioningAsync(bucket)).Trail(x => $"Bucket [{bucket}] versioning status: {x.VersioningConfig?.Status}.");
+                if (version.HttpStatusCode == HttpStatusCode.OK && version.VersioningConfig.Status != VersionStatus.Enabled)
+                {
+                    var versioningRequest = new PutBucketVersioningRequest { BucketName = bucket, VersioningConfig = new S3BucketVersioningConfig { Status = VersionStatus.Enabled } };
+                    await _client.PutBucketVersioningAsync(versioningRequest);
+                }
                 _doesBucketExist.TryAdd(bucket, true);
                 return true;
             }
@@ -86,14 +92,26 @@ namespace Wass.Code.Persistence.Aws
             return false;
         }
 
+        /**
+         * AWS S3 buckets are private, and objects are encrypted (at rest) by default.
+         * We still need to configure object immutability, to protect against file overwrites.
+         * There are many options, such as Object Lock, and Governance Policies; I have decided to go with Bucket Versioning.
+         * I don't want to make it too hard for a user to delete a file once uploaded, but there should be some protection.
+         * Keep in mind other storage services won't have the same options as AWS provides, but "some" immutability option is fairly standard across the board.
+        **/
         public static async ValueTask<bool> CreateBucket(string bucket)
         {
-            var result = await _client.PutBucketAsync(new PutBucketRequest { BucketName = bucket });
+            var create = await _client.PutBucketAsync(new PutBucketRequest { BucketName = bucket });
 
-            if (result.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Creating new bucket in S3 [{bucket}], status: {x}."))
+            if (create.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Creating new bucket in S3 [{bucket}], status: {x}."))
             {
-                _doesBucketExist.TryAdd(bucket, true);
-                return true;
+                var versioningRequest = new PutBucketVersioningRequest { BucketName = bucket, VersioningConfig = new S3BucketVersioningConfig { Status = VersionStatus.Enabled } };
+                var version = await _client.PutBucketVersioningAsync(versioningRequest);
+                if (version.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Versioning Bucket [{bucket}] status: {x}."))
+                {
+                    _doesBucketExist.TryAdd(bucket, true);
+                    return true;
+                }
             }
 
             return false;
