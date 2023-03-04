@@ -65,10 +65,6 @@ namespace Wass.Code.Persistence.Aws
             {
                 fileExists = false.Trail($"The key [{key}], does not exist in the bucket [{bucket}].");
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, nameof(DoesFileExist));
-            }
 
             return fileExists;
         }
@@ -106,12 +102,9 @@ namespace Wass.Code.Persistence.Aws
             if (create.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Creating new bucket in S3 [{bucket}], status: {x}."))
             {
                 var versioningRequest = new PutBucketVersioningRequest { BucketName = bucket, VersioningConfig = new S3BucketVersioningConfig { Status = VersionStatus.Enabled } };
-                var version = await _client.PutBucketVersioningAsync(versioningRequest);
-                if (version.HttpStatusCode == HttpStatusCode.OK.Trail(x => $"Versioning Bucket [{bucket}] status: {x}."))
-                {
-                    _doesBucketExist.TryAdd(bucket, true);
-                    return true;
-                }
+                var version = (await _client.PutBucketVersioningAsync(versioningRequest)).Trail(x => $"Versioning Bucket [{bucket}] status: {x.HttpStatusCode}.");
+                _doesBucketExist.TryAdd(bucket, true);
+                return true;
             }
 
             return false;
