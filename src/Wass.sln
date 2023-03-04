@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wass", "Wass\Wass.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wass.Infrastructure", "Wass.Infrastructure\Wass.Infrastructure.csproj", "{971C95FE-9FE6-41E5-B15F-5C161ACA3E25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Wass", "Tests.Wass\Tests.Wass.csproj", "{47F71012-9365-4AC2-9CF0-01432D2113B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.Wass", "Tests.Wass\Tests.Wass.csproj", "{47F71012-9365-4AC2-9CF0-01432D2113B0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1F049F3B-6126-4F29-8794-00753F6A6FD1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +32,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{47F71012-9365-4AC2-9CF0-01432D2113B0} = {1F049F3B-6126-4F29-8794-00753F6A6FD1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8225AA54-2CD2-4364-85F1-D023CE6CB9A9}

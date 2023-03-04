@@ -1,2 +1,0 @@
-﻿I'm the public interface for other external projects that will reference WASS.
-I implement the core functionaity of WASS: encryption, compression, CRUD operations (etc).
