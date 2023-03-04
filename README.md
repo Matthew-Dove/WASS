@@ -1,8 +1,6 @@
 # WASS
 Web Attached SStorage: a place to store all your stuff.  
 
-[PM> Install-Package WASS](https://www.nuget.org/packages/WASS/)  
-
 ## Intro
 
 ![Wass Overview](assets/images/wass-overview.png)
