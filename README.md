@@ -33,12 +33,12 @@ Where appropriate, default values are pulled from the config settings, environme
 A recipe consists of one, or more steps.  
 A file will pass though steps as it is sent to a target location.  
 For example, you might have a recipe that has the following steps:  
-* `FilterFileSizeStep:` LessThan 10GB
+* `FilterFileSizeStep:` LessThan 5GB
 * `CompressFileDataStep:` GZip
 * `EncryptFileDataStep:` AES256
 * `AwsS3StorageStep:` Glacier
 
-This recipe will filter out files >= 10GB in size, compress filedata (_gzip_); encrypt filedata (_aes-256_), then upload to it S3 (_glacier storage_).  
+This recipe will filter out files >= 5GB in size, compress filedata (_gzip_); encrypt filedata (_aes-256_), then upload to it S3 (_glacier storage_).  
 How you use the steps will differ based on the WASS UI (_i.e. console / web / etc_), you can find their descriptions; and ingredients below.  
 
 <details>
@@ -56,22 +56,24 @@ Ingredients:
 
 ## Philosophy
 
-WASS does not support deletes.  
+WASS does not support file deletes.  
+WASS does not support file updates.  
+
 If you would like to remove something from storage, you must do so manually by going to your 3rd party storage console, or local drive interfaces.  
-In the same vein, WASS does not support updates. If you update a file to "empty", that's the same as deleting it.  
+In the same vein, if you update a file to "empty", that's the same as deleting / removing it.  
 
 Why? Because if you are backing up a file though WASS, it is important to you; and you do not want to lose it by deleting, or updating local files.  
-We want to avoid replicating file changes to backup locations.  
-By not implementing this functionity in WASS, it will be harder for WASS to lose your data though any program bugs.  
-Ideally any api keys you provide contain create-only semantics, as an extra layer of protection.  
+We want to avoid replicating source file changes to backup target locations.  
+By not implementing delete, or update functionity in WASS, it will be _harder_ for WASS to lose your data though any program bugs; or user actions.  
+Ideally any api keys you provide WASS contain create-only semantics, as an extra layer of protection.  
 
 WASS treats files as immuable objects, all changes are handled with additions, not overwrites (_a file is identified by it's hash_).  
 WASS generally does not use immuable polices provided by 3rd party systems, as they are not fully consistent across the board.  
 i.e. your local NAS does not have a data governance policy that WASS can enable with an API call.  
 That said there is nothing stopping you from adding them yourself, WASS does not care as long as it still has read; and write permissions.  
 
-WASS will enable some protections to prevent program bugs from wiping out data.  
-These include things like object versioning in AWS S3, and setting read-only attributes for local files.  
+WASS does enable some protections to prevent bugs from wiping out data.  
+These include things like object versioning in AWS S3, and setting read-only attributes on local files.  
 
 When uploading a file though WASS, firstly we search for the hash at the target server.  
 If it exists, we do not upload the file data; but we may still upload metadata (_such as the source path, or search tags_).  
@@ -97,8 +99,8 @@ Therefore, I would not keep any working directories under a target location used
 ## CDN
 
 When viewing content from WASS (_online_), it's a good idea to use a CDN.  
-WASS does not natively support CDNs, but using one on top is fine.  
-Here are some popular ones:  
+WASS does not have any native support for CDNs, but using one on top is fine.  
+Here are some popular choices:  
 
 * [Bunny](https://bunny.net/cdn/)
 * [Cloudflare](https://www.cloudflare.com/cdn/)
