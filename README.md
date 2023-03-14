@@ -117,4 +117,4 @@ WASS can pull directly from the source (_without a CDN_), but you may encounter 
 
 ## 0.0.1
 
-* Upload empty project to git / nuget.
+* Upload empty project to github.

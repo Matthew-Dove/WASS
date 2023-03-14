@@ -10,13 +10,13 @@ namespace Wass.Code.Encryption
         private const int _keySize = 32;
         private const int _ivSize = 16;
 
-        private static readonly HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
+        private static readonly HashAlgorithmName _hashAlgorithm = HashAlgorithmName.SHA256;
 
         public static byte[] Encrypt(string password, byte[] plainbytes)
         {
             using var sea = Sea.Create();
             var salt = RandomNumberGenerator.GetBytes(_saltSize);
-            using var crypto = new Rfc2898DeriveBytes(password, salt, _iterations, hashAlgorithm);
+            using var crypto = new Rfc2898DeriveBytes(password, salt, _iterations, _hashAlgorithm);
             sea.Key = crypto.GetBytes(_keySize);
             sea.IV = crypto.GetBytes(_ivSize);
             using var ms = new MemoryStream();
@@ -37,7 +37,7 @@ namespace Wass.Code.Encryption
             var cipher = new byte[cipherbytes.Length - _saltSize];
             Array.Copy(cipherbytes, 0, salt, 0, _saltSize);
             Array.Copy(cipherbytes, _saltSize, cipher, 0, cipher.Length);
-            using var crypto = new Rfc2898DeriveBytes(password, salt, _iterations, hashAlgorithm);
+            using var crypto = new Rfc2898DeriveBytes(password, salt, _iterations, _hashAlgorithm);
             sea.Key = crypto.GetBytes(_keySize);
             sea.IV = crypto.GetBytes(_ivSize);
             using var ms = new MemoryStream();

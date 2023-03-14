@@ -24,7 +24,7 @@ namespace Wass.Code.Recipes.Steps
             {
                 if (!string.IsNullOrEmpty(path) && path.Contains("{{") && path.Contains("}}") && file.Path.TrySplitPath(out (string Directory, string Name, string Extension) splitPath))
                 {
-                    var hash = path.Contains("{{hash}}") ? Sha512Hex(file.Data, Encoding.UTF8.GetBytes(Config.Security.Salt)) : string.Empty;
+                    var hash = path.Contains("{{hash}}") ? Sha256Hex(file.Data, Encoding.UTF8.GetBytes(Config.Security.Salt)) : string.Empty;
 
                     path = path
                         .Replace("{{directory}}", splitPath.Directory)
@@ -50,13 +50,13 @@ namespace Wass.Code.Recipes.Steps
             return isValid.Trail(x => $"Is {nameof(SetFilePathStep)} Valid: {x}.");
         }
 
-        private static string Sha512Hex(byte[] data, byte[] salt)
+        private static string Sha256Hex(byte[] data, byte[] salt)
         {
             var dataWithSalt = new byte[data.Length + salt.Length];
             Array.Copy(data, dataWithSalt, data.Length);
             Array.Copy(salt, 0, dataWithSalt, data.Length, salt.Length);
-            using var sha512 = SHA512.Create();
-            var hash = sha512.ComputeHash(dataWithSalt);
+            using var sha256 = SHA256.Create();
+            var hash = sha256.ComputeHash(dataWithSalt);
             return Convert.ToHexString(hash);
         }
     }
