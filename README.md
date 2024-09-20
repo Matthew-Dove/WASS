@@ -94,6 +94,20 @@ Therefore, I would not keep any working directories under a target location used
 
 ![wass-product-diagram](assets/images/wass-product-diagram.png)
 
+## Object Storage
+
+These services have S3 compatible APIs, offer competitive pricing, and are popular community choices:
+
+* [AWS S3](https://aws.amazon.com/s3/)
+* [BackBlaze B2](https://www.backblaze.com/cloud-storage)
+* [CloudFlare R2](https://www.cloudflare.com/en-au/developer-platform/r2/)
+* [Wasabi](https://wasabi.com/)
+* [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces)
+* [IDrive](https://www.idrive.com/s3-storage-e2/)
+* [Petabox](https://petabox.io/)
+* [Storj](https://www.storj.io/)
+* [IceDrive](https://icedrive.net/)
+
 ## CDN
 
 When viewing content from WASS (_online_), it's a good idea to use a CDN.  
