@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.Wass", "Tests.Wass\Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1F049F3B-6126-4F29-8794-00753F6A6FD1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wass.Core", "Wass.Core\Wass.Core.csproj", "{578E7C23-5B4A-4AB6-8254-4E30D62CBF3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{47F71012-9365-4AC2-9CF0-01432D2113B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47F71012-9365-4AC2-9CF0-01432D2113B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47F71012-9365-4AC2-9CF0-01432D2113B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{578E7C23-5B4A-4AB6-8254-4E30D62CBF3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{578E7C23-5B4A-4AB6-8254-4E30D62CBF3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{578E7C23-5B4A-4AB6-8254-4E30D62CBF3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{578E7C23-5B4A-4AB6-8254-4E30D62CBF3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
