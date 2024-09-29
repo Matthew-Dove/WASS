@@ -19,8 +19,9 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <PackageReference Include="AWSSDK.S3" Version="3.7.403.1" />
+	  <PackageReference Include="AWSSDK.S3" Version="3.7.403.5" />
 	  <PackageReference Include="FrameworkContainers" Version="4.2.0" />
+	  <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="8.0.0" />
 	</ItemGroup>
 	
 	<ItemGroup>

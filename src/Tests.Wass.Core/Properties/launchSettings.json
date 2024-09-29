@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Tests.Wass.Core": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -10,21 +10,20 @@ The extra **S** in WAS**S**, is so the pronunciation is the same as NAS.
 WASS aims to be your backup, and access solution for your private files.  
 This project is meant to be consumed by other UIs, such as a console app, website, or a desktop app.  
 
-## Recipe
+## TODO
 
-![Recipe Steps](assets/images/wass-recipe-steps.png)
+* Backup / Restore file (lock object etc)
+* Compress / Decompress file (gzip / brotli)
+* Encrypt / Decrypt file
+* Add / Remove tag(s) to file (see tags section below)
+* Update filename
 
-A recipe is complied from a list of steps, which controls what happens to files presented to WASS.  
-A step can be sync, or async; and they perform some kind of operation on the file.  
-For example, you might change the file's name, encrypt the file's data, store to S3; etc.  
-You may have another recipe as a step in your recipe.  
+### Tags
 
-## Ingredients
-
-Some steps in a recipe may require special "ingredients".  
-Think of these as parameters, or arguments to a function.  
-For example, you might define a algorithm to a hash step, or the storage tier for S3.  
-Where appropriate, default values are pulled from the config settings, environment variables; or user files.  
+* Run "command" tags first, then object tags i.e. to delete "delete tags" before the object is removed.
+* Option to store tags in a different location - i.e. don't want to read tags from glacier.
+* Auto tags for things like: name, extension, size, created, last modified (prefer? since created is reset on file copy), etc.
+* Tag alias i.e. mp4 | webm == video, jpg | png == picture
 
 ## Steps
 

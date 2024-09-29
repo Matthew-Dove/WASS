@@ -34,14 +34,15 @@ namespace Wass.Code.Persistence.Aws
 
             var request = new PutObjectRequest
             {
-                InputStream = ms,
+                InputStream = ms, // Max size of 5GB for a put request, use the "multipart upload api" for upto 5TB in size.
                 BucketName = bucket,
-                Key = key,
+                Key = key, // case sensitive
                 StorageClass = storageClass,
                 BucketKeyEnabled = true,
                 MD5Digest = md5Hash,
-                ObjectLockMode = default,
-                ObjectLockRetainUntilDate = default,
+                ObjectLockMode = default, // ObjectLockMode.Governance (bucket versioning must be enabled to lock objects)
+                ObjectLockRetainUntilDate = default, // DateTime.UtcNow.AddYears(99) // 100 years is the max retention period for an object lock.
+                IfNoneMatch = default, // set "*" (multipart upload could potentially fail here - only the first one might work)
                 StreamTransferProgress = (_, e) => Log.Trace($"S3 file transfer progress for [{key}]: {e.PercentDone}%.")
             };
 
