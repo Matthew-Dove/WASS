@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Wass.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "backup {file} --compress=brotli --encrypt=aes --tag=video:funny"
+    }
+  }
+}

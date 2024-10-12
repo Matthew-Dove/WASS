@@ -16,6 +16,7 @@
     public static class ContainerExtensions
     {
         // Should "response.Transform(_ => Unit.Instance)" support T value: "response.Transform(Unit.Instance)" as well?
+        // Others? Validate(HttpStatusCode.OK)? IsEqualTo(HttpStatusCode.OK)?
 
         /// <summary>
         /// Executes one of the functions when the input response is valid, otherwise an invalid response is returned.

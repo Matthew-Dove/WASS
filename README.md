@@ -16,7 +16,7 @@ This project is meant to be consumed by other UIs, such as a console app, websit
 * Compress / Decompress file (gzip / brotli)
 * Encrypt / Decrypt file
 * Add / Remove tag(s) to file (see tags section below)
-* Update filename
+* Update filename / restore (relative) filepath
 
 ### Tags
 
@@ -101,6 +101,7 @@ These services have S3 compatible APIs, offer competitive pricing, and are popul
 * [BackBlaze B2](https://www.backblaze.com/cloud-storage)
 * [CloudFlare R2](https://www.cloudflare.com/en-au/developer-platform/r2/)
 * [Wasabi](https://wasabi.com/)
+* [Hetzner Object Storage](https://docs.hetzner.com/storage/object-storage/)
 * [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces)
 * [IDrive](https://www.idrive.com/s3-storage-e2/)
 * [Petabox](https://petabox.io/)
