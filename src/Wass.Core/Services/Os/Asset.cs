@@ -4,12 +4,12 @@ namespace Wass.Core.Services.Os
 {
     public interface IAsset
     {
-
+        bool Exists(string file);
     }
 
     public sealed class Asset : IAsset
     {
-        
+        public bool Exists(string file) => File.Exists(file);
     }
 
     /// <summary>The unit to use when calculating the filesize, one of: B | KB | MB | GB.</summary>

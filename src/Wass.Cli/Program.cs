@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Wass.Cli.Models;
 using Wass.Cli.Services;
 using Wass.Core.Models.Configuration;
+using Wass.Core.Models.Options;
 
 namespace Wass.Cli;
 
@@ -77,7 +78,7 @@ internal class Program
             isSandbox = true;
 #endif
             host = BuildHost(isSandbox);
-            var cmd = host.Services.GetService<ICommandService>();
+            var cmd = host.Services.GetRequiredService<ICommandService>();
 
             var response = await cmd.Execute(args);
             code = response.Transform(static x => x.Match(static _ => _validation, static _ => _success)).GetValueOrDefault(_error);
@@ -106,6 +107,9 @@ internal class Program
 
         var host = builder.Build();
         host.Services.AddContainerExpressionsLogging();
+
+        PrimeOptions.ThePump();
+
         return host;
     }
 }

@@ -7,13 +7,14 @@ namespace Wass.Cli.Services
         Task<Response<Either<BadRequest, Unit>>> Execute(string[] args);
     }
 
-    public sealed class CommandService(IParser _parser) : ICommandService
+    public sealed class CommandService(ICommandParser _parser, ICommandValidator _validator) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
         {
             var response = new Response<Either<BadRequest, Unit>>();
             var command = _parser.GetCommand(args);
-            if (!command) return response.With(new BadRequest());
+            var validation = command.Transform(_validator.IsValid);
+            if (!validation.IsValid || !validation.Value) return response.With(new BadRequest());
             var cmd = command.Value;
 
 
