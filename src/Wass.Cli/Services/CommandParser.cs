@@ -35,28 +35,28 @@ namespace Wass.Cli.Services
             var options = args.Skip(2);
             foreach (var option in options)
             {
-                var parts = option.Split('=');
-                if (parts.Length < 1 || parts.Length > 2) return response.LogErrorValue("Invalid argument: \"{Argument}\".".WithArgs(option));
-                if (string.IsNullOrWhiteSpace(parts[0]) || (parts.Length == 2 && string.IsNullOrWhiteSpace(parts[1]))) return response.LogErrorValue("Invalid argument: \"{Argument}\".".WithArgs(option));
+                if (string.IsNullOrWhiteSpace(option)) return response.LogErrorValue("Invalid argument: \"{Argument}\".".WithArgs(option));
 
-                if (parts.Length == 1 && !Command.FlagVariants.Contains(parts[0])) return response.LogErrorValue("Invalid flag: {Flag}, expected one of: {Flags}.".WithArgs(parts[0], string.Join(", ", Command.FlagVariants)));
-                if (parts.Length == 2 && !Command.OptionVariants.Contains(parts[0])) return response.LogErrorValue("Invalid option: {Option}, expected one of: {Options}.".WithArgs(parts[0], string.Join(", ", Command.OptionVariants)));
+                var key = string.Empty;
+                (key, _) = option.SplitOption();
+
+                if (option.IsFlag() && !Command.FlagVariants.Contains(option)) return response.LogErrorValue("Invalid flag: {Flag}, expected one of: {Flags}.".WithArgs(option, string.Join(", ", Command.FlagVariants)));
+                if (option.IsOption() && !Command.OptionVariants.Contains(key)) return response.LogErrorValue("Invalid option: {Option}, expected one of: {Options}.".WithArgs(key, string.Join(", ", Command.OptionVariants)));
             }
 
             // Parse the options and flags.
             foreach (var arg in options.Where(x => x.StartsWith("--") || x.StartsWith("-")))
             {
-                var parts = arg.Split('=');
-
-                if (parts.Length == 1) // Flag (key only).
+                if (arg.IsFlag()) // Flag (key only).
                 {
-                    string flag = parts[0];
+                    string flag = arg;
                     if (command.Flags.ContainsKey(flag)) return response.LogErrorValue("Duplicated flag: \"{Argument}\".".WithArgs(arg));
                     command.Flags.Add(flag, default);
                 }
-                else if (parts.Length == 2) // Option (key=value).
+
+                if (arg.IsOption()) // Option (key=value).
                 {
-                    string key = parts[0], value = parts[1];
+                    var (key, value) = arg.SplitOption();
                     if (command.Options.ContainsKey(key)) return response.LogErrorValue("Duplicated option: \"{Argument}\".".WithArgs(arg));
                     command.Options.Add(key, value);
                 }

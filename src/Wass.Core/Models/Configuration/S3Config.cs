@@ -15,6 +15,7 @@ namespace Wass.Core.Models.Configuration
         public string SecretAccessKey { get; set; }
         public string Region { get; set; } = "us-east-2"; // Ohio gets new features early (letting us-west-2 be the test bed), and is a cheaper region.
         public string Bucket { get; set; } = string.Empty.GenerateBucketName(); // Get a random bucket name if you don't explicitly set one.
+        public string ServiceUrl { get; set; } = "https://s3.us-east-2.amazonaws.com/"; // The endpoint to use for the S3 service destination.
     }
 
     public static class S3ConfigExtensions
@@ -35,6 +36,7 @@ namespace Wass.Core.Models.Configuration
                 !string.IsNullOrEmpty(config.GetSecretAccessKey()) &&
                 !string.IsNullOrEmpty(config.Region) &&
                 _regions.Contains(config.Region) &&
+                Uri.TryCreate(config.ServiceUrl, UriKind.Absolute, out _) &&
                 IsBucketValid(config.Bucket);
         }
 

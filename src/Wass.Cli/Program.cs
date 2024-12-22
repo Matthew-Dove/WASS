@@ -55,15 +55,17 @@ internal class Program
      *   -d,    --destination       Specify the backup destination (must be S3 compatible).
      *   -cp,   --compress          Compress the file data before backing up: gzip | brotli.
      *   -en,   --encrypt           Encrypt file data before backing up: aes.
-     *   -t,    --tag               Add a tag to the file (multiple values separated with a colon ":"), to help find it later, or to order files into categories.
+     *   -t,    --tag               Add a tag to the file (multiple values separated with a colon ":").
      *   -h,    --help              Show this help message and exit.
-     *   -dr,   --dry-run           Simulate the backup process.
-     *   -nl,   --no-log            Disable information logging.
+     *   -dr,   --dry-run           Simulate the backup process, with no side effects.
+     *   -nl,   --no-log            Disable information logging (errors will still log).
      * 
      * Examples:
      *   
      *   wass backup myfile.txt --destination=s3
      *   wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --tag=joke:funny --dry-run --no-log
+     *   
+     *   wass restore myfile.txt --destination=s3 --target="C:\temp\My Files"
     **/
     static async Task<int> Main(string[] args)
     {

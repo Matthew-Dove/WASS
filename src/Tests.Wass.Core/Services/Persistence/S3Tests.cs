@@ -29,10 +29,23 @@ namespace Tests.Wass.Core.Services.Persistence
             var s3 = new S3(S3Options);
             var data = File.ReadAllBytes($"./{_key}");
 
-            var bucket = await s3.CreateBucket(_bucket);
-            var result = await s3.CreateFile(_bucket, _key, data, S3StorageClass.IntelligentTiering);
+            var bucketExists = await s3.DoesBucketExist(_bucket);
+            Assert.True(bucketExists.IsValid);
 
-            Assert.True(result);
+            if (!bucketExists.Value)
+            {
+                var bucket = await s3.CreateBucket(_bucket);
+                Assert.True(bucket);
+            }
+
+            var fileExists = await s3.DoesFileExist(_bucket, _key);
+            Assert.True(fileExists.IsValid);
+
+            if (!fileExists.Value)
+            {
+                var file = await s3.CreateFile(_bucket, _key, data, S3StorageClass.IntelligentTiering);
+                Assert.True(file);
+            }
         }
     }
 }
