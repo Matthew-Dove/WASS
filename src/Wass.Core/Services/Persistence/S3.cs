@@ -7,64 +7,62 @@ using System.Security.Cryptography;
 using ContainerExpressions.Containers;
 using Microsoft.Extensions.Options;
 using Wass.Core.Models.Configuration;
-using Amazon;
+using System.Collections.Specialized;
 
 namespace Wass.Core.Services.Persistence
 {
     public interface IS3
     {
-        Task<Response<bool>> DoesFileExist(string bucket, string key);
-        Task<Response<Unit>> CreateFile(string bucket, string key, byte[] data, S3StorageClass storageClass);
-        ValueTask<Response<bool>> DoesBucketExist(string bucket);
-        Task<Response<Unit>> CreateBucket(string bucket);
+        Task<Response<bool>> DoesFileExist(string source, string bucket, string key);
+        Task<Response<Unit>> CreateFile(string source, string bucket, string key, byte[] data, S3StorageClass storageClass);
+        ValueTask<Response<bool>> DoesBucketExist(string source, string bucket);
+        Task<Response<Unit>> CreateBucket(string source, string bucket);
     }
 
     public sealed class S3 : IS3
     {
         private static readonly object _lock = new object();
-        private static AmazonS3Client _client;
+        private static HybridDictionary _clients = new(1);
         private static readonly ConcurrentDictionary<string, bool> _doesBucketExist = new();
 
-        public S3(IOptions<S3Config> config)
+        private readonly IOptions<DestinationConfig> _config;
+
+        public S3(IOptions<DestinationConfig> config)
         {
-            if (!config.Value.IsValid()) new InvalidOperationException("AWS S3 config is not valid.").LogError().ThrowError();
-            _client = GetClient(config.Value);
+            _config = config;
         }
 
-        private static AmazonS3Client GetClient(S3Config config)
+        private static AmazonS3Client GetClient(DestinationConfig config, string source)
         {
-            if (_client == null)
+            if (!_clients.Contains(source))
             {
                 lock (_lock)
                 {
-                    if (_client == null)
+                    if (!_clients.Contains(source))
                     {
-                        var awsConfig = new AmazonS3Config { RegionEndpoint = RegionEndpoint.GetBySystemName(config.Region) };
-                        if (config.ServiceUrl != null)
-                        {
-                            awsConfig.ServiceURL = config.ServiceUrl;
-                            awsConfig.AuthenticationRegion = config.Region;
-                            awsConfig.ForcePathStyle = true;
-                        }
-                        _client = new(config.GetAccessKeyId(), config.GetSecretAccessKey(), awsConfig);
+                        var destination = config.Sources[source];
+                        var awsConfig = new AmazonS3Config { ServiceURL = destination.ServiceUrl, AuthenticationRegion = destination.Region, ForcePathStyle = true };
+                        var client = new AmazonS3Client(destination.AccessKeyId, destination.SecretAccessKey, awsConfig);
+                        _clients.Add(source, client);
                     }
                 }
             }
-            return _client;
+            return (AmazonS3Client)_clients[source];
         }
 
-        public async Task<Response<bool>> DoesFileExist(string bucket, string key)
+        public async Task<Response<bool>> DoesFileExist(string source, string bucket, string key)
         {
-            return await DoesFileExistInS3(bucket, key);
+            var client = GetClient(_config.Value, source);
+            return await DoesFileExistInS3(client, bucket, key);
         }
 
-        private static async ResponseAsync<bool> DoesFileExistInS3(string bucket, string key)
+        private static async ResponseAsync<bool> DoesFileExistInS3(AmazonS3Client client, string bucket, string key)
         {
             var fileExists = false;
 
             try
             {
-                var result = await _client.GetObjectMetadataAsync(bucket, key);
+                var result = await client.GetObjectMetadataAsync(bucket, key);
                 if (result.HttpStatusCode == HttpStatusCode.OK)
                 {
                     fileExists = true.LogValue("The file [{Key}] was found in the bucket [{Bucket}].".WithArgs(key, bucket));
@@ -82,13 +80,14 @@ namespace Wass.Core.Services.Persistence
             return fileExists;
         }
 
-        public async Task<Response<Unit>> CreateFile(string bucket, string key, byte[] data, S3StorageClass storageClass)
+        public async Task<Response<Unit>> CreateFile(string source, string bucket, string key, byte[] data, S3StorageClass storageClass)
         {
-            var response = await CreateFileInS3(bucket, key, data, storageClass);
+            var client = GetClient(_config.Value, source);
+            var response = await CreateFileInS3(client, bucket, key, data, storageClass);
             return response.Validate(x => x == HttpStatusCode.OK).Transform(_ => Unit.Instance);
         }
 
-        private static async ResponseAsync<HttpStatusCode> CreateFileInS3(string bucket, string key, byte[] data, S3StorageClass storageClass)
+        private static async ResponseAsync<HttpStatusCode> CreateFileInS3(AmazonS3Client client, string bucket, string key, byte[] data, S3StorageClass storageClass)
         {
             using var ms = new MemoryStream(data);
             var md5Hash = GetMD5Hash(ms);
@@ -112,7 +111,7 @@ namespace Wass.Core.Services.Persistence
                 StreamTransferProgress = (_, e) => e.LogValue(x => "S3 file transfer progress for [{Key}]: {PercentDone}%.".WithArgs(key, x.PercentDone)),
             };
 
-            var result = await _client.PutObjectAsync(request).LogValueAsync(x => "Upload status to S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, x.HttpStatusCode));
+            var result = await client.PutObjectAsync(request).LogValueAsync(x => "Upload status to S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, x.HttpStatusCode));
             return result.HttpStatusCode;
         }
 
@@ -130,24 +129,25 @@ namespace Wass.Core.Services.Persistence
             return Convert.ToBase64String(hash);
         }
 
-        public async ValueTask<Response<bool>> DoesBucketExist(string bucket)
+        public async ValueTask<Response<bool>> DoesBucketExist(string source, string bucket)
         {
             if (_doesBucketExist.ContainsKey(bucket)) return Response.Create(true);
-            return await DoesBucketExistInS3(bucket);
+            var client = GetClient(_config.Value, source);
+            return await DoesBucketExistInS3(client, bucket);
         }
 
-        private static async ResponseAsync<bool> DoesBucketExistInS3(string bucket)
+        private static async ResponseAsync<bool> DoesBucketExistInS3(AmazonS3Client client, string bucket)
         {
-            var bucketExists = await AmazonS3Util.DoesS3BucketExistV2Async(_client, bucket).LogValueAsync(x => "Does AWS S3 bucket [{Bucket}] exist: {Exists}.".WithArgs(bucket, x));
+            var bucketExists = await AmazonS3Util.DoesS3BucketExistV2Async(client, bucket).LogValueAsync(x => "Does AWS S3 bucket [{Bucket}] exist: {Exists}.".WithArgs(bucket, x));
 
             if (bucketExists)
             {
                 try
                 {
                     // The following bucket configuration checks are for logging only, as the user may choose to create custom bucket configs after it's been created.
-                    var version = await _client.GetBucketVersioningAsync(bucket).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, versioning status: {VersioningStatus}.".WithArgs(bucket, x.HttpStatusCode, x.VersioningConfig?.Status));
-                    var encryption = await _client.GetBucketEncryptionAsync(new GetBucketEncryptionRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, encryption rule(s) found: {RuleCount}. {Rules}".WithArgs(bucket, x.HttpStatusCode, x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Count, string.Join(". ", x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Select(x => $"BucketKeyEnabled: {x.BucketKeyEnabled}, ServerSideEncryptionAlgorithm: {x.ServerSideEncryptionByDefault.ServerSideEncryptionAlgorithm.Value}, KeyId: {x.ServerSideEncryptionByDefault.ServerSideEncryptionKeyManagementServiceKeyId}."))));
-                    var objectLock = await _client.GetObjectLockConfigurationAsync(new GetObjectLockConfigurationRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, object lock: {ObjectLockEnabled}. Retention mode: {RetentionMode}, years: {RetentionYears}, days: {RetentionDays}.".WithArgs(bucket, x.HttpStatusCode, x.ObjectLockConfiguration.ObjectLockEnabled, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Mode?.Value, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Years, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Days));
+                    var version = await client.GetBucketVersioningAsync(bucket).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, versioning status: {VersioningStatus}.".WithArgs(bucket, x.HttpStatusCode, x.VersioningConfig?.Status));
+                    var encryption = await client.GetBucketEncryptionAsync(new GetBucketEncryptionRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, encryption rule(s) found: {RuleCount}. {Rules}".WithArgs(bucket, x.HttpStatusCode, x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Count, string.Join(". ", x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Select(x => $"BucketKeyEnabled: {x.BucketKeyEnabled}, ServerSideEncryptionAlgorithm: {x.ServerSideEncryptionByDefault.ServerSideEncryptionAlgorithm.Value}, KeyId: {x.ServerSideEncryptionByDefault.ServerSideEncryptionKeyManagementServiceKeyId}."))));
+                    var objectLock = await client.GetObjectLockConfigurationAsync(new GetObjectLockConfigurationRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, object lock: {ObjectLockEnabled}. Retention mode: {RetentionMode}, years: {RetentionYears}, days: {RetentionDays}.".WithArgs(bucket, x.HttpStatusCode, x.ObjectLockConfiguration.ObjectLockEnabled, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Mode?.Value, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Years, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Days));
                 }
                 catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -174,20 +174,21 @@ namespace Wass.Core.Services.Persistence
             return bucketExists;
         }
 
-        public async Task<Response<Unit>> CreateBucket(string bucket)
+        public async Task<Response<Unit>> CreateBucket(string source, string bucket)
         {
-            var response = await CreateBucketInS3(bucket);
+            var client = GetClient(_config.Value, source);
+            var response = await CreateBucketInS3(client, bucket);
             return response.Validate(Lambda.Identity).Transform(_ => Unit.Instance);
         }
 
         // This method is idempotent, if any of these step fails, you can run it again to recover.
-        private static async ResponseAsync<bool> CreateBucketInS3(string bucket)
+        private static async ResponseAsync<bool> CreateBucketInS3(AmazonS3Client client, string bucket)
         {
             var bucketExists = false;
 
             try
             {
-                var create = await _client.PutBucketAsync(new PutBucketRequest { BucketName = bucket, ObjectLockEnabledForBucket = true });
+                var create = await client.PutBucketAsync(new PutBucketRequest { BucketName = bucket, ObjectLockEnabledForBucket = true });
                 bucketExists = HttpStatusCode.OK == create.HttpStatusCode.LogValue(x => "Creating new bucket in S3 [{Bucket}], status: {HttpStatusCode}.".WithArgs(bucket, x));
             }
             catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.Conflict)
@@ -202,7 +203,7 @@ namespace Wass.Core.Services.Persistence
             if (bucketExists)
             {
                 var versioningRequest = new PutBucketVersioningRequest { BucketName = bucket, VersioningConfig = new S3BucketVersioningConfig { Status = VersionStatus.Enabled } };
-                var versioningResult = await _client.PutBucketVersioningAsync(versioningRequest).LogValueAsync(x => "Adding versioning to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs(bucket, x.HttpStatusCode));
+                var versioningResult = await client.PutBucketVersioningAsync(versioningRequest).LogValueAsync(x => "Adding versioning to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs(bucket, x.HttpStatusCode));
                 bucketExists = versioningResult.HttpStatusCode == HttpStatusCode.OK;
             }
 
@@ -214,7 +215,7 @@ namespace Wass.Core.Services.Persistence
                         }
                     }
                 };
-                var encryptionResult = await _client.PutBucketEncryptionAsync(new PutBucketEncryptionRequest { BucketName = bucket, ServerSideEncryptionConfiguration = encryptionRequest }).LogValueAsync(x => "Adding encryption to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs(bucket, x.HttpStatusCode));
+                var encryptionResult = await client.PutBucketEncryptionAsync(new PutBucketEncryptionRequest { BucketName = bucket, ServerSideEncryptionConfiguration = encryptionRequest }).LogValueAsync(x => "Adding encryption to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs(bucket, x.HttpStatusCode));
                 bucketExists = encryptionResult.HttpStatusCode == HttpStatusCode.OK;
             }
 
@@ -228,7 +229,7 @@ namespace Wass.Core.Services.Persistence
                         }
                     }
                 };
-                var lockResult = await _client.PutObjectLockConfigurationAsync(new PutObjectLockConfigurationRequest { BucketName = bucket, ObjectLockConfiguration = lockRequest });
+                var lockResult = await client.PutObjectLockConfigurationAsync(new PutObjectLockConfigurationRequest { BucketName = bucket, ObjectLockConfiguration = lockRequest });
                 bucketExists = lockResult.HttpStatusCode == HttpStatusCode.OK;
             }
 

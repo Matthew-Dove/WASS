@@ -38,7 +38,7 @@ namespace Wass.Cli.Services
                 if (string.IsNullOrWhiteSpace(option)) return response.LogErrorValue("Invalid argument: \"{Argument}\".".WithArgs(option));
 
                 var key = string.Empty;
-                (key, _) = option.SplitOption();
+                if (option.IsOption()) (key, _) = option.SplitOption();
 
                 if (option.IsFlag() && !Command.FlagVariants.Contains(option)) return response.LogErrorValue("Invalid flag: {Flag}, expected one of: {Flags}.".WithArgs(option, string.Join(", ", Command.FlagVariants)));
                 if (option.IsOption() && !Command.OptionVariants.Contains(key)) return response.LogErrorValue("Invalid option: {Option}, expected one of: {Options}.".WithArgs(key, string.Join(", ", Command.OptionVariants)));

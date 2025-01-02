@@ -4,13 +4,15 @@ using System.Text.RegularExpressions;
 
 namespace Wass.Core.Models.Configuration
 {
-    public sealed class S3Config
+    public sealed class DestinationConfig
     {
-        public const string SECTION_NAME = "S3";
+        public const string SECTION_NAME = "Destination";
 
-        public const string EnvironmentVariableAccessKeyId = "WASS_AWS_S3_AccessKeyId";
-        public const string EnvironmentVariableSecretAccessKey = "WASS_AWS_S3_SecretAccessKey";
+        public Dictionary<string, DestinationModel> Sources { get; set; }
+    }
 
+    public sealed class DestinationModel
+    {
         public string AccessKeyId { get; set; }
         public string SecretAccessKey { get; set; }
         public string Region { get; set; } = "us-east-2"; // Ohio gets new features early (letting us-west-2 be the test bed), and is a cheaper region.
@@ -18,7 +20,7 @@ namespace Wass.Core.Models.Configuration
         public string ServiceUrl { get; set; } = "https://s3.us-east-2.amazonaws.com/"; // The endpoint to use for the S3 service destination.
     }
 
-    public static class S3ConfigExtensions
+    public static class DestinationExtensions
     {
         private const string _uppercase = @"[A-Z]";
         private const string _dashesAdjacentToPeriods = @"-\.|\.-";
@@ -28,32 +30,20 @@ namespace Wass.Core.Models.Configuration
         private static readonly string _invalidBucketName = string.Concat(_uppercase, _or, _dashesAdjacentToPeriods, _or, _consecutivePeriods);
         private static readonly HashSet<string> _regions = new(RegionEndpoint.EnumerableAllRegions.Select(x => x.SystemName));
 
-        public static bool IsValid(this S3Config config)
+        public static bool IsValid(this DestinationConfig config)
         {
-            return
-                config != null &&
-                !string.IsNullOrEmpty(config.GetAccessKeyId()) &&
-                !string.IsNullOrEmpty(config.GetSecretAccessKey()) &&
-                !string.IsNullOrEmpty(config.Region) &&
-                _regions.Contains(config.Region) &&
-                Uri.TryCreate(config.ServiceUrl, UriKind.Absolute, out _) &&
-                IsBucketValid(config.Bucket);
-        }
+            var isValid = config?.Sources != null && config.Sources.Count > 0;
 
-        public static string GetAccessKeyId(this S3Config config)
-        {
-            return
-                string.IsNullOrEmpty(config?.AccessKeyId) ?
-                Environment.GetEnvironmentVariable(S3Config.EnvironmentVariableAccessKeyId, EnvironmentVariableTarget.User) :
-                config.AccessKeyId;
-        }
+            foreach (var source in config.Sources)
+            {
+                isValid = isValid && !string.IsNullOrEmpty(source.Value.AccessKeyId);
+                isValid = isValid && !string.IsNullOrEmpty(source.Value.SecretAccessKey);
+                isValid = isValid && (!string.IsNullOrEmpty(source.Value.Region) && _regions.Contains(source.Value.Region));
+                isValid = isValid && source.Value.Bucket.IsBucketValid();
+                isValid = isValid && Uri.TryCreate(source.Value.ServiceUrl, UriKind.Absolute, out _);
+            }
 
-        public static string GetSecretAccessKey(this S3Config config)
-        {
-            return
-                string.IsNullOrEmpty(config?.AccessKeyId) ?
-                Environment.GetEnvironmentVariable(S3Config.EnvironmentVariableSecretAccessKey, EnvironmentVariableTarget.User) :
-                config.SecretAccessKey;
+            return isValid;
         }
 
         public static string GenerateBucketName(this string _) => Path.GetRandomFileName().Replace(".", "").ToLower();

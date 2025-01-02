@@ -103,7 +103,7 @@ internal class Program
         var builder = Host.CreateApplicationBuilder();
 
         builder.Services.Configure<SecurityConfig>(builder.Configuration.GetSection(SecurityConfig.SECTION_NAME));
-        builder.Services.Configure<S3Config>(builder.Configuration.GetSection(S3Config.SECTION_NAME));
+        builder.Services.Configure<DestinationConfig>(builder.Configuration.GetSection(DestinationConfig.SECTION_NAME));
 
         builder.Services.AddServicesByConvention("Wass.Cli", isSandbox, "Wass.", "Wass.Core", "Wass.Infrastructure");
 

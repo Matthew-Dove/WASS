@@ -2,7 +2,7 @@
   "profiles": {
     "Wass.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "backup ..\\..\\..\\..\\Tests.Wass.Core\\Data\\billy-jo-catbagan-PbS9rXhsYIU-unsplash.jpg --compress=brotli --encrypt=aes --tag=video:fun\\:=ny --dry-run"
+      "commandLineArgs": "backup ..\\..\\..\\..\\Tests.Wass.Core\\Data\\billy-jo-catbagan-PbS9rXhsYIU-unsplash.jpg --compress=brotli --encrypt=aes --tag=video:fuN\\:=ny --dry-run --destination=S3"
     }
   }
 }

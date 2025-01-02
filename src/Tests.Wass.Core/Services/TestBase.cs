@@ -7,6 +7,13 @@ namespace Tests.Wass.Core.Services
 {
     public abstract class TestBase
     {
+        private static readonly string _source = "S3";
+        private static readonly DestinationModel _s3 = new DestinationModel
+        {
+            AccessKeyId = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__AccessKeyId"),
+            SecretAccessKey = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__SecretAccessKey")
+        };
+
         private readonly TestStartUp _startup = new();
 
         protected IOptions<SecurityConfig> SecurityOptions
@@ -20,13 +27,19 @@ namespace Tests.Wass.Core.Services
             }
         }
 
-        protected IOptions<S3Config> S3Options
+        protected string Source => _source;
+
+        protected IOptions<DestinationConfig> DestinationConfig
         {
             get
             {
-                var config = new Mock<IOptions<S3Config>>();
-                config.Setup(x => x.Value).Returns(new S3Config());
-                return config.Object;
+                var config = new DestinationConfig { Sources = new(1) };
+                config.Sources.Add(Source, _s3);
+
+                var options = new Mock<IOptions<DestinationConfig>>();
+                options.Setup(x => x.Value).Returns(config);
+
+                return options.Object;
             }
         }
     }
