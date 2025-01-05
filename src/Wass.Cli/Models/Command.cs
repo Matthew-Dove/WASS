@@ -5,35 +5,25 @@
         // Verbs.
         public const string VerbBackup = "backup";
         public const string VerbRestore = "restore";
-
-        // TODO: 
-        // These verbs are related to a file's metadata. i.e. date created / modified, folder (restore) path, readonly attribute.
-        // public const string VerbTag = "tag"; // Add, or remove a tag on a file (on restore, should tags also be added to the file's details pane?).
-        // public const string VerbFilename = "filename"; // Rename a file.
-        //
-        // These verbs are normally options when backing up, or restoring a file; it might be useful to have them run independently.
-        // public const string VerbCompress = "compress";
-        // public const string VerbDecompress = "decompress";
-        // public const string VerbEncrypt = "encrypt";
-        // public const string VerbDecrypt = "decrypt";
+        public const string VerbTag = "tag";
+        public const string VerbHelp = "help";
 
         // Options.
         public const string OptionCompress = "--compress", OptionCp = "-cp";
         public const string OptionDecompress = "--decompress", OptionDp = "-dp";
         public const string OptionEcrypt = "--encrypt", OptionEn = "-en";
         public const string OptionDecrypt = "--decrypt", OptionDe = "-de";
-        public const string OptionDestination = "--destination", OptionD = "-d";
-        public const string OptionTag = "--tag", OptionT = "-t";
+        public const string OptionDestination = "--destination", OptionDn = "-dn";
+        public const string OptionTags = "--tags", OptionTg = "-tg";
 
         // Flags.
-        public const string FlagHelp = "--help", FlagH = "-h";
         public const string FlagDryRun = "--dry-run", FlagDr = "-dr";
         public const string FlagNoLog = "--no-log", FlagNl = "-nl";
 
         // Variants.
-        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore];
-        public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEcrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionD, OptionTag, OptionT];
-        public static readonly string[] FlagVariants = [FlagHelp, FlagH, FlagDryRun, FlagDr, FlagNoLog, FlagNl];
+        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp];
+        public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEcrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionDn, OptionTags, OptionTg];
+        public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl];
 
         public string Verb { get; set; }
         public string File { get; set; }

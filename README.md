@@ -8,48 +8,114 @@ Web Attached SStorage: a place to store all your stuff.
 Like a NAS (*Network Attached Storage*), but with a web focus.  
 The extra **S** in WAS**S**, is so the pronunciation is the same as NAS.  
 WASS aims to be your backup, and access solution for your private files.  
-This project is meant to be consumed by other UIs, such as a console app, website, or a desktop app.  
 
-## TODO
+## S3 Compatible Storage
 
-* Backup / Restore file (lock object etc)
-* Compress / Decompress file (gzip / brotli)
-* Encrypt / Decrypt file
-* Add / Remove tag(s) to file (see tags section below)
-* Update filename / restore (relative) filepath
+WASS uses the AWS S3 SDK, and as such is compatible with any storage provider that supports the API.  
+This is a bit of an industry standard, as such all the major players tend to support it (_to varying degrees_).   
 
-### Tags
+## Compress
 
-* Run "command" tags first, then object tags i.e. to delete "delete tags" before the object is removed.
-* Option to store tags in a different location - i.e. don't want to read tags from glacier.
-* Auto tags for things like: name, extension, size, created, last modified (prefer? since created is reset on file copy), etc.
-* Tag alias i.e. mp4 | webm == video, jpg | png == picture
+You can compress files before backing them up, WASS currently supports: `Gzip`, and `Brotli`.  
+On restore you would instruct WASS to decompress the file.  
 
-## Steps
+## Encrypt
 
-A recipe consists of one, or more steps.  
-A file will pass though steps as it is sent to a target location.  
-For example, you might have a recipe that has the following steps:  
-* `FilterFileSizeStep:` LessThan 5GB
-* `CompressFileDataStep:` GZip
-* `EncryptFileDataStep:` AES256
-* `AwsS3StorageStep:` Glacier
+You can encrypt files before backing them up, WASS currently supports: `AES` (_256-bit key with salt_).  
+On restore you would instruct WASS to decrypt the file.  
 
-This recipe will filter out files >= 5GB in size, compress filedata (_gzip_); encrypt filedata (_aes-256_), then upload to it S3 (_glacier storage_).  
-How you use the steps will differ based on the WASS UI (_i.e. console / web / etc_), you can find their descriptions; and ingredients below.  
+## Tag
 
-<details>
-<summary>[Step Descriptions]</summary>
+You can `tag` files once they have been backed up to a storage destination.  
+Tags allow you to search for files containing said tag(_s_) later on.  
+For example, you might tag a file by it's type (_mp4_), category (_video_), and characteristics (_funny_).  
 
-### AwsS3StorageStep
+## CLI API
 
-Uploads a file to S3.  
+WASS has a CLI for `backing up`, `restoring`, and `tagging` files.  
+In general the commands follow this pattern: `> wass <verb> <file> [options]`.   
 
-Ingredients:  
-* `bucket:` the bucket name to upload the file to.
-* `storage:` the storage class to use for this file.
+```console
+> wass backup {file} [options]  
+> wass restore {file} [options]
+> wass tag {file} [options]
+> wass help
+```
 
-</details>
+Expanded `backup` example with options.  
+```console
+> wass backup --file=myfile.txt --compress=brotli --encrypt=aes --destination=s3
+```
+
+**Dash Style:**  
+Use a single dash for short options (-f) and double dash for long options (--file).  
+For parameters that expect a value, use the format `--key=value`, or `-k=value`.  
+
+**Character Escape:**  
+Escape special characters, and delimiters in option values; with a backslash `\`.  
+
+**Commands:**
+```
+backup      Upload the specified file to the configured destination.
+restore     Download the specified file from the configured destination.
+tag         Add a tag to the file (multiple values separated with a colon ":").
+help        Show help message, and exit.
+```
+
+**Options:**  
+```
+-cp,   --compress          Compress the file data before backing up: gzip | brotli.
+-dp,   --decompress        Decompress the file data before restoring: gzip | brotli.
+-en,   --encrypt           Encrypt file data before backing up: aes.
+-de,   --decrypt           Decrypt file data before restoring: aes.
+-dn,   --destination       Specify the backup destination found in the config (API must be S3 compatible).
+-dr,   --dry-run           Simulate the process, with no side effects.
+-nl,   --no-log            Disable logging for the run.
+-tg,   --tags              Add tags to a backed up file.
+```
+
+**Config:**  
+`Security.Password` is used as the key for file encryption.  
+`Security.Salt` used for hashing operations.  
+`Destination.Sources.*` is where you configure your backup sources, you can have as many as you like.  
+
+All config values found in _appsettings.json_ can be overridden with environment variables.  
+The convention is to follow the json path to the property you want to override, nested scopes are traversed with double underscores `__`.  
+For example, to set a source's _SecretAccessKey_, the env var name would be: `Destination__Sources__S3__SecretAccessKey`.  
+You would set `B2`'s destination in a similar way: `Destination__Sources__B2__SecretAccessKey`..  
+
+```json
+{
+  "Security": {
+    "Password": "password",
+    "Salt": "salt"
+  },
+  "Destination": {
+    "Sources": {
+      "S3": {
+        "AccessKeyId": "accessKeyId",
+        "SecretAccessKey": "secretAccessKey",
+        "Bucket": "bucketName",
+        "Region": "us-east-2",
+        "ServiceUrl": "https://s3.us-east-2.amazonaws.com/"
+      },
+      "B2": {
+        "AccessKeyId": "applicationKeyId",
+        "SecretAccessKey": "applicationKey",
+        "Bucket": "bucketName",
+        "Region": "us-west-004",
+        "ServiceUrl": "https://s3.us-west-004.backblazeb2.com/"
+      }
+    }
+  }
+}
+```
+
+Credentials / keys / passwords, bucket names, and destinations (_etc_) are pulled from the local config.  
+Exit codes are based on success, or failure:  
+- `0` - Success.
+- `1` - Error (_operation was not successful, or an internal exception occurred_).
+- `2` - Bad Request (_invalid commands, or arguments_).
 
 ## Philosophy
 
@@ -69,9 +135,6 @@ WASS generally does not use immuable polices provided by 3rd party systems, as t
 i.e. your local NAS does not have a data governance policy that WASS can enable with an API call.  
 That said there is nothing stopping you from adding them yourself, WASS does not care as long as it still has read; and write permissions.  
 
-WASS does enable some protections to prevent bugs from wiping out data.  
-These include things like object versioning in AWS S3, and setting read-only attributes on local files.  
-
 When uploading a file though WASS, firstly we search for the hash at the target server.  
 If it exists, we do not upload the file data; but we may still upload metadata (_such as the source path, or search tags_).  
 
@@ -83,7 +146,7 @@ As a side note, this philosophy makes WASS a poor choice for backing up things y
 If you are writing a story let's say, each time you saved it; WASS will treat it as a new file (_since the hash has changed_).  
 Over time, you might have hundreds of files for your story (_or more!_).  
 This gets worse when the work is something larger, for example a photoshop file; or a video that you're editing.  
-Therefore, I would not keep any working directories under a target location used by WASS.  
+Therefore, do not keep any working directories under a target location used by WASS.  
 
 ## TODO
 

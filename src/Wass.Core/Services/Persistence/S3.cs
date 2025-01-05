@@ -36,6 +36,7 @@ namespace Wass.Core.Services.Persistence
         {
             if (!_clients.Contains(source))
             {
+                config.ThrowIf(x => !x.IsValid(), "Destination config is not valid.");
                 lock (_lock)
                 {
                     if (!_clients.Contains(source))

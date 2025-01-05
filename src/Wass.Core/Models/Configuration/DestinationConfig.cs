@@ -1,5 +1,4 @@
-﻿using Amazon;
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Wass.Core.Models.Configuration
@@ -15,9 +14,9 @@ namespace Wass.Core.Models.Configuration
     {
         public string AccessKeyId { get; set; }
         public string SecretAccessKey { get; set; }
-        public string Region { get; set; } = "us-east-2"; // Ohio gets new features early (letting us-west-2 be the test bed), and is a cheaper region.
-        public string Bucket { get; set; } = string.Empty.GenerateBucketName(); // Get a random bucket name if you don't explicitly set one.
-        public string ServiceUrl { get; set; } = "https://s3.us-east-2.amazonaws.com/"; // The endpoint to use for the S3 service destination.
+        public string Bucket { get; set; }
+        public string Region { get; set; }
+        public string ServiceUrl { get; set; }
     }
 
     public static class DestinationExtensions
@@ -28,7 +27,6 @@ namespace Wass.Core.Models.Configuration
         private const string _or = @"|";
 
         private static readonly string _invalidBucketName = string.Concat(_uppercase, _or, _dashesAdjacentToPeriods, _or, _consecutivePeriods);
-        private static readonly HashSet<string> _regions = new(RegionEndpoint.EnumerableAllRegions.Select(x => x.SystemName));
 
         public static bool IsValid(this DestinationConfig config)
         {
@@ -38,14 +36,15 @@ namespace Wass.Core.Models.Configuration
             {
                 isValid = isValid && !string.IsNullOrEmpty(source.Value.AccessKeyId);
                 isValid = isValid && !string.IsNullOrEmpty(source.Value.SecretAccessKey);
-                isValid = isValid && (!string.IsNullOrEmpty(source.Value.Region) && _regions.Contains(source.Value.Region));
                 isValid = isValid && source.Value.Bucket.IsBucketValid();
-                isValid = isValid && Uri.TryCreate(source.Value.ServiceUrl, UriKind.Absolute, out _);
+                isValid = isValid && !string.IsNullOrEmpty(source.Value.Region);
+                isValid = isValid && (!string.IsNullOrEmpty(source.Value.ServiceUrl) && Uri.TryCreate(source.Value.ServiceUrl, UriKind.Absolute, out _));
             }
 
             return isValid;
         }
 
+        /// <summary>Creates a random bucket name.</summary>
         public static string GenerateBucketName(this string _) => Path.GetRandomFileName().Replace(".", "").ToLower();
 
         /**

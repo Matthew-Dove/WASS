@@ -2,6 +2,7 @@
 using FrameworkContainers.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Wass.Cli.Models;
 using Wass.Cli.Services;
 using Wass.Core.Models.Configuration;
@@ -23,16 +24,10 @@ internal class Program
      * 
      * > wass backup {file} [options]
      * > wass restore {file} [options]
-     * 
-     * > wass compress {file} [options]
-     * > wass decompress {file} [options]
-     * 
-     * > wass encrypt {file} [options]
-     * > wass decrypt {file} [options]
-     * 
      * > wass tag {file} [options]
+     * > wass help
      * 
-     * > wass backup {file} --compress=brotli --encrypt=aes --tag=video:funny
+     * > wass backup {file} --compress=brotli --encrypt=aes --destination=s3
      * 
      * Dash Style: Use a single dash for short options (-f) and double dash for long options (--file).
      * For parameters that expect a value, use the format --option=value or -o value.
@@ -45,27 +40,22 @@ internal class Program
      * If --no-log is specified, information logging is suppressed.
      * > wass backup myfile.txt --destination=s3 --no-log
      * 
-     * Include a --help or -h flag for each command to explain it's usage.
-     * > wass backup --help
-     * Usage: wass backup {file} [options]
-     * {file}: Specify the file to backup.
-     * 
      * Options:
      *   
-     *   -d,    --destination       Specify the backup destination (must be S3 compatible).
+     *   -dn,   --destination       Specify the backup destination (must be S3 compatible).
      *   -cp,   --compress          Compress the file data before backing up: gzip | brotli.
      *   -en,   --encrypt           Encrypt file data before backing up: aes.
      *   -t,    --tag               Add a tag to the file (multiple values separated with a colon ":").
      *   -h,    --help              Show this help message and exit.
      *   -dr,   --dry-run           Simulate the backup process, with no side effects.
-     *   -nl,   --no-log            Disable information logging (errors will still log).
+     *   -nl,   --no-log            Disable logging for the run.
      * 
      * Examples:
      *   
      *   wass backup myfile.txt --destination=s3
-     *   wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --tag=joke:funny --dry-run --no-log
+     *   wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
      *   
-     *   wass restore myfile.txt --destination=s3 --target="C:\temp\My Files"
+     *   wass restore myfile.txt --destination=s3 --location="C:\temp\My Files"
     **/
     static async Task<int> Main(string[] args)
     {
@@ -75,11 +65,12 @@ internal class Program
 
         try
         {
+            var noLog = args.FirstOrDefault(static x => Command.FlagNl.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagNoLog.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;
             var isSandbox = args.FirstOrDefault(static x => Command.FlagDr.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagDryRun.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;
 #if DEBUG
             isSandbox = true;
 #endif
-            host = BuildHost(isSandbox);
+            host = BuildHost(isSandbox, noLog);
             var cmd = host.Services.GetRequiredService<ICommandService>();
 
             var response = await cmd.Execute(args);
@@ -98,9 +89,10 @@ internal class Program
         return code;
     }
 
-    private static IHost BuildHost(bool isSandbox)
+    private static IHost BuildHost(bool isSandbox, bool noLog)
     {
         var builder = Host.CreateApplicationBuilder();
+        if (noLog) builder.Logging.ClearProviders();
 
         builder.Services.Configure<SecurityConfig>(builder.Configuration.GetSection(SecurityConfig.SECTION_NAME));
         builder.Services.Configure<DestinationConfig>(builder.Configuration.GetSection(DestinationConfig.SECTION_NAME));

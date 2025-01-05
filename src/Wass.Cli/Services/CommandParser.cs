@@ -19,6 +19,7 @@ namespace Wass.Cli.Services
         {
             var response = new Response<Command>();
             if (args.Length == 0) return response.LogErrorValue("No args found.");
+            if (args.Length == 1) return GetHelpCommand(args[0]);
             if (args.Length < 2) return response.LogErrorValue("{Args}(s) args found, but expected at least 2 arguments (command verb, and file).".WithArgs(args.Length));
             if (string.IsNullOrWhiteSpace(args[0])) return response.LogErrorValue("Verb cannot be empty: \"{Verb}\".".WithArgs(args[0]));
             if (string.IsNullOrWhiteSpace(args[1])) return response.LogErrorValue("File cannot be empty: \"{File}\".".WithArgs(args[1]));
@@ -63,6 +64,23 @@ namespace Wass.Cli.Services
             }
 
             return response.With(command);
+        }
+
+        /// <summary>If there is only one argument, it's expected to be the "help" command.</summary>
+        private static Response<Command> GetHelpCommand(string arg)
+        {
+            var response = new Response<Command>();
+
+            if (
+                !Command.VerbHelp.Equals(arg) ||
+                !"--help".Equals(arg) ||
+                !"-h".Equals(arg)
+                )
+            {
+                return response.LogErrorValue("{Args}(s) args found, but expected at least 2 arguments (command verb, and file).".WithArgs(1));
+            }
+
+            return response.With(new Command { Verb = Command.VerbHelp });
         }
     }
 }

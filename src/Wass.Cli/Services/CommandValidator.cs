@@ -16,13 +16,19 @@ namespace Wass.Cli.Services
     {
         public bool IsValid(Command command)
         {
-            var isValid = ValidateFile(command.File).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFile), x));
+            var isValid = true;
+
+            if (command.Verb != Command.VerbHelp)
+            {
+                isValid = ValidateFile(command.File).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFile), x));
+            }
 
             if (command.Verb == Command.VerbBackup)
             {
                 isValid = isValid && ValidateDestination(command.Options, _config.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDestination), x));
                 isValid = isValid && ValidateCompress(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateCompress), x));
                 isValid = isValid && ValidateEncrypt(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateEncrypt), x));
+                isValid = isValid && ValidateTags(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateTags), x));
             }
 
             if (command.Verb == Command.VerbRestore)
@@ -32,6 +38,11 @@ namespace Wass.Cli.Services
                 isValid = isValid && ValidateDecrypt(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecrypt), x));
             }
 
+            if (command.Verb == Command.VerbTag)
+            {
+                isValid = isValid && ValidateTags(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateTags), x));
+            }
+
             return isValid;
         }
 
@@ -39,11 +50,11 @@ namespace Wass.Cli.Services
 
         private static bool ValidateDestination(Dictionary<string, string> options, DestinationConfig config)
         {
-            if (!(options.ContainsKey(Command.OptionDestination) || options.ContainsKey(Command.OptionD))) return false.LogF("S3 compatible destination must be specified.");
+            if (!(options.ContainsKey(Command.OptionDestination) || options.ContainsKey(Command.OptionDn))) return false.LogF("S3 compatible destination must be specified.");
 
-            var isValid = (!(options.ContainsKey(Command.OptionDestination) & options.ContainsKey(Command.OptionD)))
+            var isValid = (!(options.ContainsKey(Command.OptionDestination) & options.ContainsKey(Command.OptionDn)))
                 .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
-                .WithArgs(Command.OptionDestination, Command.OptionD));
+                .WithArgs(Command.OptionDestination, Command.OptionDn));
 
             isValid = isValid && (
                 config.IsValid()
@@ -51,7 +62,7 @@ namespace Wass.Cli.Services
 
             isValid = isValid && (
                 options.TryGetValue(Command.OptionDestination, out var destination) && config.Sources.TryGetValue(destination, out _) ||
-                options.TryGetValue(Command.OptionD, out var d) && config.Sources.TryGetValue(d, out _)
+                options.TryGetValue(Command.OptionDn, out var d) && config.Sources.TryGetValue(d, out _)
             ).LogF("Invalid value for the destination option, expected one of: [{DestinationOptions}].".WithArgs(string.Join(", ", config.Sources.Keys)));
 
             return isValid;
@@ -83,7 +94,7 @@ namespace Wass.Cli.Services
 
             isValid = isValid && (
                 options.TryGetValue(Command.OptionDecompress, out var decompress) && SmartEnum<CompressionOptions>.FromName(decompress) ||
-                options.TryGetValue(Command.OptionCp, out var dp) && SmartEnum<CompressionOptions>.FromName(dp)
+                options.TryGetValue(Command.OptionDp, out var dp) && SmartEnum<CompressionOptions>.FromName(dp)
             ).LogF("Invalid value for the decompress option, expected one of: [{CompressionOptions}].".WithArgs(string.Join(", ", SmartEnum<CompressionOptions>.GetNames())));
 
             return isValid;
@@ -111,12 +122,28 @@ namespace Wass.Cli.Services
 
             var isValid = (!(options.ContainsKey(Command.OptionDecrypt) & options.ContainsKey(Command.OptionDe)))
                 .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
-                .WithArgs(Command.OptionDecrypt, Command.OptionEn));
+                .WithArgs(Command.OptionDecrypt, Command.OptionDe));
 
             isValid = isValid && (
                 options.TryGetValue(Command.OptionDecrypt, out var decrypt) && SmartEnum<EncryptionOptions>.FromName(decrypt) ||
                 options.TryGetValue(Command.OptionDe, out var de) && SmartEnum<EncryptionOptions>.FromName(de)
             ).LogF("Invalid value for the decrypt option, expected one of: [{EncryptionOptions}].".WithArgs(string.Join(", ", SmartEnum<EncryptionOptions>.GetNames())));
+
+            return isValid;
+        }
+
+        private static bool ValidateTags(Dictionary<string, string> options, bool isRequired)
+        {
+            if (!(options.ContainsKey(Command.OptionTags) || options.ContainsKey(Command.OptionTg))) return !isRequired;
+
+            var isValid = (!(options.ContainsKey(Command.OptionTags) & options.ContainsKey(Command.OptionTg)))
+                .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
+                .WithArgs(Command.OptionTags, Command.OptionTg));
+
+            isValid = isValid && (
+                options.TryGetValue(Command.OptionTags, out var tags) && !string.IsNullOrWhiteSpace(tags) ||
+                options.TryGetValue(Command.OptionTg, out var tg) && !string.IsNullOrWhiteSpace(tg)
+            ).LogF("Invalid value for the tags option, cannot be empty.");
 
             return isValid;
         }

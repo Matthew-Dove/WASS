@@ -7,11 +7,16 @@ namespace Tests.Wass.Core.Services
 {
     public abstract class TestBase
     {
-        private static readonly string _source = "S3";
+        /// <summary>Replace "S3" with whatever your "Source" is called in the config file under "Destination".</summary>
+        protected const string _source = "S3";
+
         private static readonly DestinationModel _s3 = new DestinationModel
         {
             AccessKeyId = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__AccessKeyId"),
-            SecretAccessKey = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__SecretAccessKey")
+            SecretAccessKey = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__SecretAccessKey"),
+            Bucket = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__Bucket"),
+            Region = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__Region") ?? "us-east-2",
+            ServiceUrl = Environment.GetEnvironmentVariable($"Destination__Sources__{_source}__ServiceUrl") ?? "https://s3.us-east-2.amazonaws.com/"
         };
 
         private readonly TestStartUp _startup = new();

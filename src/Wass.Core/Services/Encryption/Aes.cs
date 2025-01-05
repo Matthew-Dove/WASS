@@ -12,8 +12,8 @@ namespace Wass.Core.Services.Encryption
 
     public sealed class Aes : IAes
     {
-        private const int _iterations = 10000;
-        private const int _saltSize = 16;
+        private const int _iterations = 666666;
+        private const int _saltSize = 32;
         private const int _keySize = 32;
         private const int _ivSize = 16;
 
