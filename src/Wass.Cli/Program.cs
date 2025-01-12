@@ -26,6 +26,10 @@ internal class Program
      * > wass restore {file} [options]
      * > wass tag {file} [options]
      * > wass help
+     * > wass encryption {file} [options]
+     * > wass decryption {file} [options]
+     * > wass compression {file} [options]
+     * > wass decompression {file} [options]
      * 
      * > wass backup {file} --compress=brotli --encrypt=aes --destination=s3
      * 
@@ -60,6 +64,13 @@ internal class Program
      *   wass tag myfile.txt --tags="tag1:tag2:tag3"
      *   
      *   wass help
+     *   
+     *   wass encryption myfile.txt --location=./myfile.txt.enc --encrypt=aes
+     *   wass decryption myfile.txt.enc --location=./myfile.txt --decrypt=aes
+     *   
+     *   wass compression myfile.txt --location=./myfile.txt.zip --compress=gzip
+     *   wass decompression myfile.txt.zip --location=./myfile.txt --decompress=gzip
+     *   
     **/
     static async Task<int> Main(string[] args)
     {

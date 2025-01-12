@@ -72,8 +72,10 @@ namespace Wass.Cli.Services
             var response = new Response<Command>();
 
             if (
-                !Command.VerbHelp.Equals(arg) ||
-                !"--help".Equals(arg) ||
+                !Command.VerbHelp.Equals(arg) &&
+                !"--help".Equals(arg) &&
+                !"-help".Equals(arg) &&
+                !"--h".Equals(arg) &&
                 !"-h".Equals(arg)
                 )
             {

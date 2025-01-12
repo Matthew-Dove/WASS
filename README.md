@@ -41,6 +41,10 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 > wass restore {file} [options]
 > wass tag {file} [options]
 > wass help
+> wass encryption {file} [options]
+> wass decryption {file} [options]
+> wass compression {file} [options]
+> wass decompression {file} [options]
 ```
 
 Expanded `backup` example with options.  
@@ -56,15 +60,19 @@ For parameters that expect a value, use the format `--key=value`, or `-k=value`.
 Escape special characters, and delimiters in option values; with a backslash `\`.  
 
 **Commands:**
-```
-backup      Upload the specified file to the configured destination.
-restore     Download the specified file from the configured destination.
-tag         Add a tag to the file (multiple values separated with a colon ":").
-help        Show help message, and exit.
+```console
+backup          Upload the specified file to the configured destination.
+restore         Download the specified file from the configured destination.
+tag             Add tags to the file at a specified destination (colon delimited - "tag1:tag2").
+help            Show help message, and exit.
+encryption      Encrypt a file, and store the result locally.
+decryption      Decrypt a file, and store the result locally.
+compression     Compress a file, and store the result locally.
+decompression   Decompress a file, and store the result locally.
 ```
 
 **Options:**  
-```
+```console
 -cp,   --compress          Compress the file data before backing up: gzip | brotli.
 -dp,   --decompress        Decompress the file data before restoring: gzip | brotli.
 -en,   --encrypt           Encrypt file data before backing up: aes.
@@ -76,9 +84,9 @@ help        Show help message, and exit.
 ```
 
 **Exit Codes:**
-* `0:` Success.
-* `1:` Error (_operation was not successful, or an exception occurred_).
-* `2:` Bad Request (_invalid cli commands, or arguments_).
+* `0` Success.
+* `1` Error (_operation was not successful, or an exception occurred_).
+* `2` Bad Request (_invalid cli commands, or arguments_).
 
 **Config:**  
 `Security.Password` is used as the key for file encryption.  

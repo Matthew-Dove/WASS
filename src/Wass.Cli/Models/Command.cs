@@ -25,7 +25,7 @@
         public const string FlagNoLog = "--no-log", FlagNl = "-nl";
 
         // Variants.
-        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp];
+        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp, VerbEncryption, VerbDecryption, VerbCompression, VerbDecompression];
         public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEncrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionDn, OptionTags, OptionTg];
         public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl];
 

@@ -120,10 +120,14 @@ namespace Wass.Cli.Services
             Usage: wass <command> <file> [options]
 
             Commands:
-                backup      Upload the specified file to the configured destination.
-                restore     Download the specified file from the configured destination.
-                tag         Add a tag to the file (multiple values separated with a colon ":").
-                help        Show help message, and exit.
+                backup          Upload the specified file to the configured destination.
+                restore         Download the specified file from the configured destination.
+                tag             Add tags to the file at a specified destination (colon delimited - "tag1:tag2").
+                help            Show help message, and exit.
+                encryption      Encrypt a file, and store the result locally.
+                decryption      Decrypt a file, and store the result locally.
+                compression     Compress a file, and store the result locally.
+                decompression   Decompress a file, and store the result locally.
 
             Options:
                 -cp,   --compress          Compress the file data before backing up: gzip | brotli.
@@ -146,6 +150,12 @@ namespace Wass.Cli.Services
                 wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
 
                 wass help
+
+                wass encryption myfile.txt --location=./myfile.txt.enc --encrypt=aes
+                wass decryption myfile.txt.enc --location=./myfile.txt --decrypt=aes
+
+                wass compression myfile.txt --location=./myfile.txt.zip --compress=gzip
+                wass decompression myfile.txt.zip --location=./myfile.txt --decompress=gzip
 
             Project:
                 https://github.com/matthew-dove/wass
