@@ -16,21 +16,51 @@ namespace Wass.Cli.Services
             var command = _parser.GetCommand(args);
             var validation = command.Transform(_validator.IsValid);
             if (!validation.IsValid || !validation.Value) return response.With(new BadRequest());
+
             var cmd = command.Value;
+            var tags = GetTags(cmd.Options);
 
             if (cmd.Verb == Command.VerbHelp)
             {
                 Console.WriteLine(GetHelpText());
-                return response.With(Unit.Instance);
+                response = response.With(Unit.Instance);
             }
 
-            // Backup, restore, and tag functionality should be implemented in the core.
-
-            var tags = GetTags(cmd.Options);
+            // The following functionality should be implemented in the core.
 
             if (cmd.Verb == Command.VerbBackup)
             {
                 // TODO: Implement backup functionality.
+            }
+
+            if (cmd.Verb == Command.VerbRestore)
+            {
+                // TODO: Implement restore functionality.
+            }
+
+            if (cmd.Verb == Command.VerbTag)
+            {
+                // TODO: Implement tag functionality.
+            }
+
+            if (cmd.Verb == Command.VerbEncryption)
+            {
+                // TODO: Implement ecrypt functionality.
+            }
+
+            if (cmd.Verb == Command.VerbDecryption)
+            {
+                // TODO: Implement decrypt functionality.
+            }
+
+            if (cmd.Verb == Command.VerbCompression)
+            {
+                // TODO: Implement compress functionality.
+            }
+
+            if (cmd.Verb == Command.VerbDecompression)
+            {
+                // TODO: Implement decompress functionality.
             }
 
             await Task.Delay(0);
@@ -63,7 +93,7 @@ namespace Wass.Cli.Services
 
                 if (c == escape && current + 1 < input.Length && input[current + 1] == delimiter)
                 {
-                    current += 2; // Skip both the backslash, and colon (\:).
+                    current += 2;
                     continue;
                 }
 
@@ -77,7 +107,6 @@ namespace Wass.Cli.Services
                 current++;
             }
 
-            // Get the last segment.
             slice = input.Slice(start, current - start).ToString();
             if (!string.IsNullOrWhiteSpace(slice)) segments.Add(slice);
             return segments.ToArray();
@@ -106,9 +135,6 @@ namespace Wass.Cli.Services
                 -nl,   --no-log            Disable logging for the run.
                 -tg,   --tags              Add tags to a backed up file.
 
-            Project:
-                https://github.com/matthew-dove/wass
-
             Examples:
                 wass backup myfile.txt --destination=s3
                 wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
@@ -120,6 +146,14 @@ namespace Wass.Cli.Services
                 wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
 
                 wass help
+
+            Project:
+                https://github.com/matthew-dove/wass
+
+            Exit Codes:
+                0: Success.
+                1: Error (operation was not successful, or an exception occurred).
+                2: Bad Request (invalid cli commands, or arguments).
 
             """;
         }

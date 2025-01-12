@@ -56,6 +56,10 @@ internal class Program
      *   wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
      *   
      *   wass restore myfile.txt --destination=s3 --location="C:\temp\My Files"
+     *   
+     *   wass tag myfile.txt --tags="tag1:tag2:tag3"
+     *   
+     *   wass help
     **/
     static async Task<int> Main(string[] args)
     {

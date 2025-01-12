@@ -29,6 +29,7 @@ On restore you would instruct WASS to decrypt the file.
 You can `tag` files once they have been backed up to a storage destination.  
 Tags allow you to search for files containing said tag(_s_) later on.  
 For example, you might tag a file by it's type (_mp4_), category (_video_), and characteristics (_funny_).  
+Seperate tag values are delimited by a colon (`:`), i.e. "_mp4:video:funny_".
 
 ## CLI API
 
@@ -74,6 +75,11 @@ help        Show help message, and exit.
 -tg,   --tags              Add tags to a backed up file.
 ```
 
+**Exit Codes:**
+* `0:` Success.
+* `1:` Error (_operation was not successful, or an exception occurred_).
+* `2:` Bad Request (_invalid cli commands, or arguments_).
+
 **Config:**  
 `Security.Password` is used as the key for file encryption.  
 `Security.Salt` used for hashing operations.  
@@ -110,12 +116,6 @@ You would set `B2`'s destination in a similar way: `Destination__Sources__B2__Se
   }
 }
 ```
-
-Credentials / keys / passwords, bucket names, and destinations (_etc_) are pulled from the local config.  
-Exit codes are based on success, or failure:  
-- `0` - Success.
-- `1` - Error (_operation was not successful, or an internal exception occurred_).
-- `2` - Bad Request (_invalid commands, or arguments_).
 
 ## Philosophy
 
