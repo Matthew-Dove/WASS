@@ -63,7 +63,7 @@ namespace Wass.Cli.Services
                 }
             }
 
-            return response.With(command);
+            return response.With(command).Log("Command args parsed.");
         }
 
         /// <summary>If there is only one argument, it's expected to be the "help" command.</summary>

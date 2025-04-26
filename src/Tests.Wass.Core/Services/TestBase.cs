@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Moq;
 using Wass.Core.Models.Configuration;
+using Wass.Core.Models.Options;
 
 namespace Tests.Wass.Core.Services
 {
@@ -54,6 +55,8 @@ namespace Tests.Wass.Core.Services
         // Set the loggers up only once per application domain.
         static TestStartUp()
         {
+            PrimeOptions.ThePump();
+
             Action<string> trace = x => Console.Out.WriteLine("[Info] {0}", [x]);
             Action<Exception> error = ex => Console.Error.WriteLine("[Error] {0}\r\n{1}", [ex, ex.GetCallerAttributes()]);
 

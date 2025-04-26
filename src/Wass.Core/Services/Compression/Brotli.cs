@@ -13,7 +13,7 @@ namespace Wass.Core.Services.Compression
     {
         public Response<byte[]> Compress(byte[] data) => Try.Run(() => CompressBytes(data), "Error compressing with Brotli.");
 
-        private static Response<byte[]> CompressBytes(byte[] data)
+        private static byte[] CompressBytes(byte[] data)
         {
             using var ms = new MemoryStream();
             using var bs = new BrotliStream(ms, CompressionLevel.SmallestSize);
@@ -25,7 +25,7 @@ namespace Wass.Core.Services.Compression
 
         public Response<byte[]> Decompress(byte[] data) => Try.Run(() => DecompressBytes(data), "Error decompressing with Brotli.");
 
-        private static Response<byte[]> DecompressBytes(byte[] data)
+        private static byte[] DecompressBytes(byte[] data)
         {
             using var ms = new MemoryStream(data);
             using var bs = new BrotliStream(ms, CompressionMode.Decompress);

@@ -44,20 +44,17 @@ namespace Wass.Core.Models.Configuration
             return isValid;
         }
 
-        /// <summary>Creates a random bucket name.</summary>
-        public static string GenerateBucketName(this string _) => Path.GetRandomFileName().Replace(".", "").ToLower();
-
         /**
          * S3 Bucket Naming Requirements:
          * - The name must be between 3, and 63 characters long (inclusive), containing lower-case characters, numbers, periods, and dashes.
          * - The name must start with a lowercase letter or number, and cannot end with a dash, have consecutive periods, use dashes adjacent to periods, or be in the IP address format.
          * - The prefix "xn--", and the suffix "-s3alias" are reserved; for best compatibility it's recommend dots ".", are not included in bucket names.
         **/
-        public static bool IsBucketValid(this string bucket)
+        private static bool IsBucketValid(this string bucket)
         {
             return
                 !string.IsNullOrEmpty(bucket) && // Must have a value.
-                (bucket.Length >= 3 || bucket.Length <= 63) && // Must be between 3, and 63 (inclusive) characters in length.
+                (bucket.Length >= 3 && bucket.Length <= 63) && // Must be between 3, and 63 (inclusive) characters in length.
                 (char.IsNumber(bucket[0]) || char.IsLower(bucket[0])) && // Must start with a number, or a lowercase letter.
                 bucket[^1] != '-' && // Cannot end with a dash.
                 !IPAddress.TryParse(bucket, out _) && // Cannot be an IP address.

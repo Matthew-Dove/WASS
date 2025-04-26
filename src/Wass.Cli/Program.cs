@@ -1,5 +1,6 @@
 ﻿using ContainerExpressions.Containers;
 using FrameworkContainers.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -109,10 +110,16 @@ internal class Program
         var builder = Host.CreateApplicationBuilder();
         if (noLog) builder.Logging.ClearProviders();
 
+#if DEBUG
+        isSandbox = true;
+        var path = Path.GetFullPath("../../../appsettings.debug.json");
+        builder.Configuration.AddJsonFile(path, optional: true, reloadOnChange: false);
+#endif
+
         builder.Services.Configure<SecurityConfig>(builder.Configuration.GetSection(SecurityConfig.SECTION_NAME));
         builder.Services.Configure<DestinationConfig>(builder.Configuration.GetSection(DestinationConfig.SECTION_NAME));
 
-        builder.Services.AddServicesByConvention("Wass.Cli", isSandbox, "Wass.", "Wass.Core", "Wass.Infrastructure");
+        builder.Services.AddServicesByConvention("Wass.Cli", isSandbox, scanInternals: false, "Wass.", "Wass.Core", "Wass.Infrastructure");
 
         var host = builder.Build();
         host.Services.AddContainerExpressionsLogging();

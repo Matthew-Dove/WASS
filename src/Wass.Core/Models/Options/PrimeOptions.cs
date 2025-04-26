@@ -10,6 +10,7 @@ namespace Wass.Core.Models.Options
         {
             _ = SmartEnum<CompressionOptions>.Init();
             _ = SmartEnum<EncryptionOptions>.Init();
+            _ = SmartEnum<ResourceOptions>.Init();
         }
     }
 }

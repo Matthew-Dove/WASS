@@ -21,6 +21,10 @@ namespace Wass.Core.Services.Persistence
 
     public sealed class S3 : IS3
     {
+        const int _daysToWaitforMultipartUploads = 7;
+        const string _removeExpiredDeleteMarkersRuleId = "WassRemoveExpiredDeleteMarkers";
+        private static readonly string _abortMultipartUploadsRuleId = $"WassAbortIncompleteMultipartUploadAfter{_daysToWaitforMultipartUploads}Days";
+
         private static readonly object _lock = new object();
         private static HybridDictionary _clients = new(1);
         private static readonly ConcurrentDictionary<string, bool> _doesBucketExist = new();
@@ -99,7 +103,7 @@ namespace Wass.Core.Services.Persistence
             var request = new PutObjectRequest
             {
                 BucketName = bucket,
-                InputStream = ms, // Max size for an object put request is 5GB , use the "multipart upload api" for upto 5TB in size.
+                InputStream = ms, // Max size for an object put request is 5GB, use the "multipart upload api" for upto 5TB in size.
                 Key = key, // Case sensitive.
                 StorageClass = storageClass, // Different storage classes provide varying levels of durability, availability, and cost.
                 BucketKeyEnabled = true, // Encrypt objects at rest.
@@ -108,7 +112,8 @@ namespace Wass.Core.Services.Persistence
                 IfNoneMatch = "*", // Multipart upload could potentially fail here - only the first upload might work.
                 MD5Digest = md5Hash, // Ensure the content is transmitted, and stored correctly.
                 ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
-                ChecksumSHA256 = sha256Hash,
+                ChecksumSHA256 = sha256Hash, // Data integrity check ensuring the object written to S3 matches the local one.
+                CannedACL = S3CannedACL.Private, // The object's access rights.
                 StreamTransferProgress = (_, e) => e.LogValue(x => "S3 file transfer progress for [{Key}]: {PercentDone}%.".WithArgs(key, x.PercentDone)),
             };
 
@@ -146,6 +151,7 @@ namespace Wass.Core.Services.Persistence
                 try
                 {
                     // The following bucket configuration checks are for logging only, as the user may choose to create custom bucket configs after it's been created.
+                    var lifecycle = await client.GetLifecycleConfigurationAsync(new GetLifecycleConfigurationRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, lifecycle rule(s) found: {RuleCount}. {Rules}.".WithArgs(bucket, x.HttpStatusCode, x.Configuration.Rules.Count, string.Join("; ", x.Configuration.Rules.Select(y => $"Id: {y.Id}, Status: {y.Status}"))));
                     var version = await client.GetBucketVersioningAsync(bucket).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, versioning status: {VersioningStatus}.".WithArgs(bucket, x.HttpStatusCode, x.VersioningConfig?.Status));
                     var encryption = await client.GetBucketEncryptionAsync(new GetBucketEncryptionRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, encryption rule(s) found: {RuleCount}. {Rules}".WithArgs(bucket, x.HttpStatusCode, x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Count, string.Join(". ", x.ServerSideEncryptionConfiguration.ServerSideEncryptionRules.Select(x => $"BucketKeyEnabled: {x.BucketKeyEnabled}, ServerSideEncryptionAlgorithm: {x.ServerSideEncryptionByDefault.ServerSideEncryptionAlgorithm.Value}, KeyId: {x.ServerSideEncryptionByDefault.ServerSideEncryptionKeyManagementServiceKeyId}."))));
                     var objectLock = await client.GetObjectLockConfigurationAsync(new GetObjectLockConfigurationRequest { BucketName = bucket }).LogValueAsync(x => "Bucket [{Bucket}] http status: {HttpStatusCode}, object lock: {ObjectLockEnabled}. Retention mode: {RetentionMode}, years: {RetentionYears}, days: {RetentionDays}.".WithArgs(bucket, x.HttpStatusCode, x.ObjectLockConfiguration.ObjectLockEnabled, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Mode?.Value, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Years, x.ObjectLockConfiguration.Rule?.DefaultRetention?.Days));
@@ -189,7 +195,7 @@ namespace Wass.Core.Services.Persistence
 
             try
             {
-                var create = await client.PutBucketAsync(new PutBucketRequest { BucketName = bucket, ObjectLockEnabledForBucket = true });
+                var create = await client.PutBucketAsync(new PutBucketRequest { BucketName = bucket, ObjectLockEnabledForBucket = true, CannedACL = S3CannedACL.Private });
                 bucketExists = HttpStatusCode.OK == create.HttpStatusCode.LogValue(x => "Creating new bucket in S3 [{Bucket}], status: {HttpStatusCode}.".WithArgs(bucket, x));
             }
             catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.Conflict)
@@ -230,8 +236,29 @@ namespace Wass.Core.Services.Persistence
                         }
                     }
                 };
-                var lockResult = await client.PutObjectLockConfigurationAsync(new PutObjectLockConfigurationRequest { BucketName = bucket, ObjectLockConfiguration = lockRequest });
+                var lockResult = await client.PutObjectLockConfigurationAsync(new PutObjectLockConfigurationRequest { BucketName = bucket, ObjectLockConfiguration = lockRequest }).LogValueAsync(x => "Adding governance retention to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs(bucket, x.HttpStatusCode));
                 bucketExists = lockResult.HttpStatusCode == HttpStatusCode.OK;
+            }
+
+            if (bucketExists)
+            {
+                var multipartRequest = new LifecycleConfiguration { Rules = new List<LifecycleRule> {
+                    new LifecycleRule {
+                        Id = _abortMultipartUploadsRuleId,
+                        Status = LifecycleRuleStatus.Enabled,
+                        Filter = new LifecycleFilter(),
+                        AbortIncompleteMultipartUpload = new LifecycleRuleAbortIncompleteMultipartUpload { DaysAfterInitiation = _daysToWaitforMultipartUploads },
+                    },
+                    new LifecycleRule {
+                        Id = _removeExpiredDeleteMarkersRuleId,
+                        Status = LifecycleRuleStatus.Enabled,
+                        Filter = new LifecycleFilter(),
+                        Expiration = new LifecycleRuleExpiration { ExpiredObjectDeleteMarker = true }
+                    }
+                }};
+
+                var multipartResult = await client.PutLifecycleConfigurationAsync(new PutLifecycleConfigurationRequest { BucketName = bucket, Configuration = multipartRequest }).LogValueAsync(x => "Adding lifecycle rules: {RuleId} to bucket [{Bucket}] result: {HttpStatusCode}.".WithArgs($"{_abortMultipartUploadsRuleId}, and {_removeExpiredDeleteMarkersRuleId}", bucket, x.HttpStatusCode));
+                bucketExists = multipartResult.HttpStatusCode == HttpStatusCode.OK;
             }
 
             if (bucketExists) _doesBucketExist.TryAdd(bucket, true);

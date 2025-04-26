@@ -1,5 +1,8 @@
 ﻿using ContainerExpressions.Containers;
 using Wass.Cli.Models;
+using Wass.Core.Models;
+using Wass.Core.Models.Options;
+using Wass.Core.Services.Actions;
 
 namespace Wass.Cli.Services
 {
@@ -8,7 +11,11 @@ namespace Wass.Cli.Services
         Task<Response<Either<BadRequest, Unit>>> Execute(string[] args);
     }
 
-    public sealed class CommandService(ICommandParser _parser, ICommandValidator _validator) : ICommandService
+    public sealed class CommandService(
+        ICommandParser _parser,
+        ICommandValidator _validator,
+        IBackupAction _backup
+        ) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
         {
@@ -19,6 +26,15 @@ namespace Wass.Cli.Services
 
             var cmd = command.Value;
             var tags = GetTags(cmd.Options);
+            var source = cmd.Options.GetOption(Command.OptionDestination, Command.OptionDn);
+
+            var compression = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.None).Value;
+            var compress = cmd.Options.GetOption(Command.OptionCompress, Command.OptionCp);
+            if (compress != string.Empty) compression = SmartEnum<CompressionOptions>.FromName(compress);
+
+            var encryption = SmartEnum<EncryptionOptions>.FromObject(EncryptionOptions.None).Value;
+            var encrypt = cmd.Options.GetOption(Command.OptionEncrypt, Command.OptionEn);
+            if (encrypt != string.Empty) encryption = SmartEnum<EncryptionOptions>.FromName(encrypt);
 
             if (cmd.Verb == Command.VerbHelp)
             {
@@ -26,11 +42,11 @@ namespace Wass.Cli.Services
                 response = response.With(Unit.Instance);
             }
 
-            // The following functionality should be implemented in the core.
-
             if (cmd.Verb == Command.VerbBackup)
             {
-                // TODO: Implement backup functionality.
+                var request = new ActionRequest { Source = source, File = cmd.File, Compression = compression, Encryption = encryption, Tags = tags };
+                var result = await _backup.Backup(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
             if (cmd.Verb == Command.VerbRestore)
@@ -63,18 +79,17 @@ namespace Wass.Cli.Services
                 // TODO: Implement decompress functionality.
             }
 
-            await Task.Delay(0);
             return response;
         }
 
         private static string[] GetTags(Dictionary<string, string> options)
         {
             var tags = Array.Empty<string>();
-            var hasTags = options.TryGetValue(Command.OptionTags, out var tg) || options.TryGetValue(Command.OptionTg, out tg);
+            var tag = options.GetOption(Command.OptionTags, Command.OptionTg);
 
-            if (hasTags)
+            if (tag != string.Empty)
             {
-                var unescapedTags = tg.UnescapeOptionValue();
+                var unescapedTags = tag.UnescapeOptionValue();
                 tags = Split(unescapedTags.AsSpan(), escape: '\\', delimiter: ':');
             }
 
@@ -166,6 +181,15 @@ namespace Wass.Cli.Services
                 2: Bad Request (invalid cli commands, or arguments).
 
             """;
+        }
+    }
+
+    file static class CommandExtensions
+    {
+        public static string GetOption(this Dictionary<string, string> options, string key, string shortKey)
+        {
+            _ = options.TryGetValue(key, out var option) || options.TryGetValue(shortKey, out option);
+            return option ?? string.Empty;
         }
     }
 }
