@@ -2,7 +2,20 @@
 {
     public sealed class FileMetadataModel
     {
+        /// <summary>
+        /// When encryption is used, Noise adds some random bytes to the model.
+        /// <para>Used to make reverse engineering on small known data sets harder.</para>
+        /// <para>Can be null / empty if not used.</para>
+        /// </summary>
+        public string Noise { get; set; }
+
+        /// <summary>ISO 8601.</summary>
         public string Created { get; set; }
+
+        /// <summary>Full directory, name, and extension; excludes the drive (i.e. C / D / etc).</summary>
         public string Path { get; set; }
+
+        /// <summary>True when the file was a compressible format.</summary>
+        public bool IsCompressible { get; set; }
     }
 }

@@ -11,6 +11,8 @@
         public const string VerbDecryption = "decryption";
         public const string VerbCompression = "compression";
         public const string VerbDecompression = "decompression";
+        public const string VerbSalt = "salt";
+        public const string VerbPassword = "password";
 
         // Options.
         public const string OptionCompress = "--compress", OptionCp = "-cp";
@@ -19,14 +21,16 @@
         public const string OptionDecrypt = "--decrypt", OptionDe = "-de";
         public const string OptionDestination = "--destination", OptionDn = "-dn";
         public const string OptionTags = "--tags", OptionTg = "-tg";
+        public const string OptionSize = "--size", OptionSz = "-sz";
+        public const string OptionFileHash = "--file-hash", OptionFh = "-fh";
 
         // Flags.
         public const string FlagDryRun = "--dry-run", FlagDr = "-dr";
         public const string FlagNoLog = "--no-log", FlagNl = "-nl";
 
         // Variants.
-        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp, VerbEncryption, VerbDecryption, VerbCompression, VerbDecompression];
-        public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEncrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionDn, OptionTags, OptionTg];
+        public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp, VerbEncryption, VerbDecryption, VerbCompression, VerbDecompression, VerbSalt, VerbPassword];
+        public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEncrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionDn, OptionTags, OptionTg, OptionSize, OptionSz, OptionFileHash, OptionFh];
         public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl];
 
         public string Verb { get; set; }

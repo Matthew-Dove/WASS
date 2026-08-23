@@ -48,6 +48,19 @@ namespace Tests.Wass.Core.Services
                 return options.Object;
             }
         }
+
+        protected IOptions<DownloadConfig> DownloadConfig
+        {
+            get
+            {
+                var config = new DownloadConfig { LocalRootPath = @"C:\Wass\Restores\" };
+
+                var options = new Mock<IOptions<DownloadConfig>>();
+                options.Setup(x => x.Value).Returns(config);
+
+                return options.Object;
+            }
+        }
     }
 
     internal sealed class TestStartUp

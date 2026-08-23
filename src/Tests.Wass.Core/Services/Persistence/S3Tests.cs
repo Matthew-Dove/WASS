@@ -54,5 +54,18 @@ namespace Tests.Wass.Core.Services.Persistence
                 Assert.True(file);
             }
         }
+
+        [Fact(Skip = "Run to list files in a bucket")]
+        public async Task ListFiles()
+        {
+            var config = DestinationConfig;
+            var bucketName = config.Value.Sources[Source].Bucket;
+            var s3 = new S3(config);
+
+            var files = await s3.ListFiles(Source, bucketName, string.Empty);
+
+            Assert.True(files.IsValid);
+            Assert.NotEmpty(files.Value);
+        }
     }
 }

@@ -14,7 +14,8 @@ namespace Wass.Cli.Services
     public sealed class CommandService(
         ICommandParser _parser,
         ICommandValidator _validator,
-        IBackupAction _backup
+        IBackupAction _backup,
+        IRestoreAction _restore
         ) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
@@ -24,62 +25,90 @@ namespace Wass.Cli.Services
             var validation = command.Transform(_validator.IsValid);
             if (!validation.IsValid || !validation.Value) return response.With(new BadRequest());
 
-            var cmd = command.Value;
-            var tags = GetTags(cmd.Options);
-            var source = cmd.Options.GetOption(Command.OptionDestination, Command.OptionDn);
+            var verb = command.Value.Verb;
+            var request = BuildRequest(command);
 
-            var compression = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.None).Value;
-            var compress = cmd.Options.GetOption(Command.OptionCompress, Command.OptionCp);
-            if (compress != string.Empty) compression = SmartEnum<CompressionOptions>.FromName(compress);
-
-            var encryption = SmartEnum<EncryptionOptions>.FromObject(EncryptionOptions.None).Value;
-            var encrypt = cmd.Options.GetOption(Command.OptionEncrypt, Command.OptionEn);
-            if (encrypt != string.Empty) encryption = SmartEnum<EncryptionOptions>.FromName(encrypt);
-
-            if (cmd.Verb == Command.VerbHelp)
+            if (verb == Command.VerbHelp)
             {
                 Console.WriteLine(GetHelpText());
                 response = response.With(Unit.Instance);
             }
 
-            if (cmd.Verb == Command.VerbBackup)
+            if (verb == Command.VerbBackup)
             {
-                var request = new ActionRequest { Source = source, File = cmd.File, Compression = compression, Encryption = encryption, Tags = tags };
                 var result = await _backup.Backup(request);
                 if (result) response = response.With(Unit.Instance);
             }
 
-            if (cmd.Verb == Command.VerbRestore)
+            if (verb == Command.VerbRestore)
             {
-                // TODO: Implement restore functionality.
+                var result = await _restore.Restore(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
-            if (cmd.Verb == Command.VerbTag)
+            if (verb == Command.VerbTag)
             {
                 // TODO: Implement tag functionality.
             }
 
-            if (cmd.Verb == Command.VerbEncryption)
+            if (verb == Command.VerbEncryption)
             {
                 // TODO: Implement ecrypt functionality.
             }
 
-            if (cmd.Verb == Command.VerbDecryption)
+            if (verb == Command.VerbDecryption)
             {
                 // TODO: Implement decrypt functionality.
             }
 
-            if (cmd.Verb == Command.VerbCompression)
+            if (verb == Command.VerbCompression)
             {
                 // TODO: Implement compress functionality.
             }
 
-            if (cmd.Verb == Command.VerbDecompression)
+            if (verb == Command.VerbDecompression)
             {
                 // TODO: Implement decompress functionality.
             }
 
+            if (verb == Command.VerbSalt)
+            {
+                // TODO: Implement salt functionality.
+            }
+
+            if (verb == Command.VerbPassword)
+            {
+                // TODO: Implement password functionality.
+            }
+
             return response;
+        }
+
+        private static ActionRequest BuildRequest(Command command)
+        {
+            var compression = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.None).Value;
+            var compress = command.Options.GetOption(Command.OptionCompress, Command.OptionCp);
+            if (compress != string.Empty) compression = SmartEnum<CompressionOptions>.FromName(compress);
+
+            var encryption = SmartEnum<EncryptionOptions>.FromObject(EncryptionOptions.None).Value;
+            var encrypt = command.Options.GetOption(Command.OptionEncrypt, Command.OptionEn);
+            if (encrypt != string.Empty) encryption = SmartEnum<EncryptionOptions>.FromName(encrypt);
+
+            var isDryRun = command.Flags.HasFlag(Command.FlagDryRun, Command.FlagDr);
+            var source = command.Options.GetOption(Command.OptionDestination, Command.OptionDn);
+            var tags = GetTags(command.Options);
+            var fileHash = command.Options.GetOption(Command.OptionFileHash, Command.OptionFh);
+
+            return new ActionRequest
+            {
+                IsDryRun = isDryRun,
+                Source = source,
+                File = command.File,
+                Compression = compression,
+                Encryption = encryption,
+                Tags = tags,
+                FileHash = fileHash
+            };
         }
 
         private static string[] GetTags(Dictionary<string, string> options)
@@ -143,6 +172,8 @@ namespace Wass.Cli.Services
                 decryption      Decrypt a file, and store the result locally.
                 compression     Compress a file, and store the result locally.
                 decompression   Decompress a file, and store the result locally.
+                salt            Generate a cryptographic salt of the specified size in bytes, presented in hex.
+                password        Generate a cryptographic password of the specified character length, using a-z, A-Z, 0-9, and special characters.
 
             Options:
                 -cp,   --compress          Compress the file data before backing up: gzip | brotli.
@@ -153,24 +184,28 @@ namespace Wass.Cli.Services
                 -dr,   --dry-run           Simulate the process, with no side effects.
                 -nl,   --no-log            Disable logging for the run.
                 -tg,   --tags              Add tags to a backed up file.
+                -sz,   --size              The size of the salt, or password to generate.
+                -fh,   --file-hash         The hash of the file to restore.
 
             Examples:
                 wass backup myfile.txt --destination=s3
                 wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
 
                 wass restore myfile.txt --destination=s3 --location="C:\temp\My Files"
-                wass restore myfile.txt --destination=s3 --location="C:\temp\My Files" --decompress=brotli --decrypt=aes
 
                 wass tag myfile.txt --tags="tag1:tag2:tag3"
                 wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
 
                 wass help
 
-                wass encryption myfile.txt --location=./myfile.txt.enc --encrypt=aes
-                wass decryption myfile.txt.enc --location=./myfile.txt --decrypt=aes
+                wass compression myfile.txt --compress=brotli
+                wass decompression myfile.txt.br --decompress=brotli
 
-                wass compression myfile.txt --location=./myfile.txt.zip --compress=gzip
-                wass decompression myfile.txt.zip --location=./myfile.txt --decompress=gzip
+                wass encryption myfile.txt.br --encrypt=aes
+                wass decryption myfile.txt.br.bin --decrypt=aes
+
+                wass salt --size=16
+                wass password --size=20
 
             Project:
                 https://github.com/matthew-dove/wass
@@ -190,6 +225,11 @@ namespace Wass.Cli.Services
         {
             _ = options.TryGetValue(key, out var option) || options.TryGetValue(shortKey, out option);
             return option ?? string.Empty;
+        }
+
+        public static bool HasFlag(this Dictionary<string, string> flags, string key, string shortKey)
+        {
+            return flags.ContainsKey(key) || flags.ContainsKey(shortKey);
         }
     }
 }

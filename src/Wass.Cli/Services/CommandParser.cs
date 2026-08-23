@@ -1,5 +1,6 @@
 ﻿using ContainerExpressions.Containers;
 using Wass.Cli.Models;
+using Wass.Core;
 
 namespace Wass.Cli.Services
 {
@@ -20,20 +21,28 @@ namespace Wass.Cli.Services
             var response = new Response<Command>();
             if (args.Length == 0) return response.LogErrorValue("No args found.");
             if (args.Length == 1) return GetHelpCommand(args[0]);
-            if (args.Length < 2) return response.LogErrorValue("{Args}(s) args found, but expected at least 2 arguments (command verb, and file).".WithArgs(args.Length));
+            if (args.Length < 2) return response.LogErrorValue("{Args}(s) args found, but expected at least 2 arguments.".WithArgs(args.Length));
             if (string.IsNullOrWhiteSpace(args[0])) return response.LogErrorValue("Verb cannot be empty: \"{Verb}\".".WithArgs(args[0]));
-            if (string.IsNullOrWhiteSpace(args[1])) return response.LogErrorValue("File cannot be empty: \"{File}\".".WithArgs(args[1]));
+            if (string.IsNullOrWhiteSpace(args[1])) return response.LogErrorValue("First arg cannot be empty: \"{Arg}\".".WithArgs(args[1]));
 
+            var skipArgs = 2; // Skip the first two args (verb, and file).
             var command = new Command { Verb = args[0], File = args[1] };
 
             // Validate the command argument is known.
             if (!Command.VerbVariants.Contains(command.Verb)) return response.LogErrorValue("Invalid verb: {Verb}, expected one of: {Verbs}.".WithArgs(command.Verb, string.Join(", ", Command.VerbVariants)));
 
+            // Some verbs don't require a file.
+            if (command.Verb.In([Command.VerbRestore, Command.VerbSalt, Command.VerbPassword]))
+            {
+                command.File = string.Empty;
+                skipArgs = 1; // Skip the first arg only (verb).
+            }
+
             // Validate file argument (not a comprehensive check, file validation is done futher downstream).
             if (command.File.IndexOfAny(Path.GetInvalidPathChars()) >= 0) return response.LogErrorValue("File has invalid characters: \"{File}\".".WithArgs(command.File));
 
             // Validate the options, and flags are known.
-            var options = args.Skip(2);
+            var options = args.Skip(skipArgs);
             foreach (var option in options)
             {
                 if (string.IsNullOrWhiteSpace(option)) return response.LogErrorValue("Invalid argument: \"{Argument}\".".WithArgs(option));

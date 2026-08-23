@@ -1,13 +1,12 @@
-﻿using Amazon.S3.Model;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Util;
-using Amazon.S3;
+using ContainerExpressions.Containers;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Cryptography;
-using ContainerExpressions.Containers;
-using Microsoft.Extensions.Options;
 using Wass.Core.Models.Configuration;
-using System.Collections.Specialized;
 
 namespace Wass.Core.Services.Persistence
 {
@@ -17,16 +16,17 @@ namespace Wass.Core.Services.Persistence
         Task<Response<Unit>> CreateFile(string source, string bucket, string key, byte[] data, S3StorageClass storageClass);
         ValueTask<Response<bool>> DoesBucketExist(string source, string bucket);
         Task<Response<Unit>> CreateBucket(string source, string bucket);
+        Task<Response<string[]>> ListFiles (string source, string bucket, string prefix);
+        Task<Response<byte[]>> DownloadFile(string source, string bucket, string key);
     }
 
     public sealed class S3 : IS3
     {
-        const int _daysToWaitforMultipartUploads = 7;
-        const string _removeExpiredDeleteMarkersRuleId = "WassRemoveExpiredDeleteMarkers";
+        private const int _daysToWaitforMultipartUploads = 7;
+        private const string _removeExpiredDeleteMarkersRuleId = "WassRemoveExpiredDeleteMarkers";
         private static readonly string _abortMultipartUploadsRuleId = $"WassAbortIncompleteMultipartUploadAfter{_daysToWaitforMultipartUploads}Days";
 
-        private static readonly object _lock = new object();
-        private static HybridDictionary _clients = new(1);
+        private static readonly ConcurrentDictionary<string, AmazonS3Client> _clients = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, bool> _doesBucketExist = new();
 
         private readonly IOptions<DestinationConfig> _config;
@@ -38,21 +38,13 @@ namespace Wass.Core.Services.Persistence
 
         private static AmazonS3Client GetClient(DestinationConfig config, string source)
         {
-            if (!_clients.Contains(source))
+            return _clients.GetOrAdd(source, src =>
             {
                 config.ThrowIf(x => !x.IsValid(), "Destination config is not valid.");
-                lock (_lock)
-                {
-                    if (!_clients.Contains(source))
-                    {
-                        var destination = config.Sources[source];
-                        var awsConfig = new AmazonS3Config { ServiceURL = destination.ServiceUrl, AuthenticationRegion = destination.Region, ForcePathStyle = true };
-                        var client = new AmazonS3Client(destination.AccessKeyId, destination.SecretAccessKey, awsConfig);
-                        _clients.Add(source, client);
-                    }
-                }
-            }
-            return (AmazonS3Client)_clients[source];
+                var destination = config.Sources[src];
+                var awsConfig = new AmazonS3Config { ServiceURL = destination.ServiceUrl, AuthenticationRegion = destination.Region, ForcePathStyle = true };
+                return new AmazonS3Client(destination.AccessKeyId, destination.SecretAccessKey, awsConfig);
+            });
         }
 
         public async Task<Response<bool>> DoesFileExist(string source, string bucket, string key)
@@ -68,10 +60,8 @@ namespace Wass.Core.Services.Persistence
             try
             {
                 var result = await client.GetObjectMetadataAsync(bucket, key);
-                if (result.HttpStatusCode == HttpStatusCode.OK)
-                {
-                    fileExists = true.LogValue("The file [{Key}] was found in the bucket [{Bucket}].".WithArgs(key, bucket));
-                }
+                result.HttpStatusCode.ThrowIf(static x => x != HttpStatusCode.OK);
+                fileExists = true.LogValue("The file [{Key}] was found in the bucket [{Bucket}].".WithArgs(key, bucket));
             }
             catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -137,12 +127,12 @@ namespace Wass.Core.Services.Persistence
 
         public async ValueTask<Response<bool>> DoesBucketExist(string source, string bucket)
         {
-            if (_doesBucketExist.ContainsKey(bucket)) return Response.Create(true);
+            if (_doesBucketExist.ContainsKey($"{source}:{bucket}")) return Response.Create(true);
             var client = GetClient(_config.Value, source);
-            return await DoesBucketExistInS3(client, bucket);
+            return await DoesBucketExistInS3(client, source, bucket);
         }
 
-        private static async ResponseAsync<bool> DoesBucketExistInS3(AmazonS3Client client, string bucket)
+        private static async ResponseAsync<bool> DoesBucketExistInS3(AmazonS3Client client, string source, string bucket)
         {
             var bucketExists = await AmazonS3Util.DoesS3BucketExistV2Async(client, bucket).LogValueAsync(x => "Does AWS S3 bucket [{Bucket}] exist: {Exists}.".WithArgs(bucket, x));
 
@@ -175,7 +165,7 @@ namespace Wass.Core.Services.Persistence
                     }
                 }
 
-                _doesBucketExist.TryAdd(bucket, true);
+                _doesBucketExist.TryAdd($"{source}:{bucket}", true);
             }
 
             return bucketExists;
@@ -184,12 +174,12 @@ namespace Wass.Core.Services.Persistence
         public async Task<Response<Unit>> CreateBucket(string source, string bucket)
         {
             var client = GetClient(_config.Value, source);
-            var response = await CreateBucketInS3(client, bucket);
+            var response = await CreateBucketInS3(client, source, bucket);
             return response.Validate(Lambda.Identity).Transform(_ => Unit.Instance);
         }
 
         // This method is idempotent, if any of these step fails, you can run it again to recover.
-        private static async ResponseAsync<bool> CreateBucketInS3(AmazonS3Client client, string bucket)
+        private static async ResponseAsync<bool> CreateBucketInS3(AmazonS3Client client, string source, string bucket)
         {
             var bucketExists = false;
 
@@ -261,8 +251,65 @@ namespace Wass.Core.Services.Persistence
                 bucketExists = multipartResult.HttpStatusCode == HttpStatusCode.OK;
             }
 
-            if (bucketExists) _doesBucketExist.TryAdd(bucket, true);
+            if (bucketExists) _doesBucketExist.TryAdd($"{source}:{bucket}", true);
             return bucketExists;
+        }
+
+        public async Task<Response<string[]>> ListFiles(string source, string bucket, string prefix)
+        {
+            var client = GetClient(_config.Value, source);
+            return await ListFilesInS3(client, bucket, prefix);
+        }
+
+        private static async ResponseAsync<string[]> ListFilesInS3(AmazonS3Client client, string bucket, string prefix)
+        {
+            var continuationToken = default(string);
+            var files = new List<string>();
+            var i = 0;
+
+            do {
+                var request = new ListObjectsV2Request { BucketName = bucket, Prefix = prefix, ContinuationToken = continuationToken };
+                var result = await client.ListObjectsV2Async(request).LogValueAsync(x => "Listing keys for bucket [{Bucket}] result: {HttpStatusCode}, using prefix: \"{Prefix}\". Keys found: {KeyCount}, is key count truncated: {IsTruncated}, iteration: {PassCount}.".WithArgs(bucket, x.HttpStatusCode, prefix, x.KeyCount, x.IsTruncated, ++i));
+                result.HttpStatusCode.ThrowIf(static x => x != HttpStatusCode.OK);
+                continuationToken = result.NextContinuationToken;
+                var keys = result.S3Objects.Select(x => x.Key);
+                files.AddRange(keys);
+            }
+            while (continuationToken != null);
+
+            return files.ToArray();
+        }
+
+        public async Task<Response<byte[]>> DownloadFile(string source, string bucket, string key)
+        {
+            var client = GetClient(_config.Value, source);
+            return await DownloadFileFromS3(client, bucket, key);
+        }
+
+        private static async ResponseAsync<byte[]> DownloadFileFromS3(AmazonS3Client client, string bucket, string key)
+        {
+            var file = Array.Empty<byte>();
+
+            try
+            {
+                var request = new GetObjectRequest { BucketName = bucket, Key = key };
+                var response = await client.GetObjectAsync(request).LogValueAsync(x => "Download status from S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, x.HttpStatusCode));
+                response.HttpStatusCode.ThrowIf(static x => x != HttpStatusCode.OK);
+
+                using var ms = new MemoryStream();
+                await response.ResponseStream.CopyToAsync(ms);
+                file = ms.ToArray();
+            }
+            catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
+            {
+                Log.Info("The key [{Key}], does not exist in the bucket [{Bucket}].".WithArgs(key, bucket));
+            }
+            catch (AggregateException ae) when (ae.InnerExceptions.Count == 1 && ae.InnerException is AmazonS3Exception aex && aex.StatusCode == HttpStatusCode.NotFound)
+            {
+                Log.Info("The key [{Key}], does not exist in the bucket [{Bucket}].".WithArgs(key, bucket));
+            }
+
+            return file;
         }
     }
 }

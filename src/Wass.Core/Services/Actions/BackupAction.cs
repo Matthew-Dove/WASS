@@ -1,6 +1,7 @@
 ﻿using Amazon.S3;
 using ContainerExpressions.Containers;
 using FrameworkContainers.Format.JsonCollective;
+using FrameworkContainers.Format.JsonCollective.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Wass.Core.Models;
@@ -56,62 +57,63 @@ namespace Wass.Core.Services.Actions
 
             var fileParts = _asset.SplitPath(request.File);
             var shouldCompress = !Category.IsCompressed(fileParts.Extension).LogValue(x => "Is the file extension {Extension} already compressed: {IsCompressed}.".WithArgs(fileParts.Extension, x));
-            var stream = CompressAndEncrypt(request, data, shouldCompress: shouldCompress);
+            var stream = CompressAndEncrypt(request, data, UnitVariant.KB, shouldCompress);
 
-            return await stream.BindAsync(x => ApplyMetadataOptions(request, fileHash, x, $"{fileParts.Directory}/{fileParts.Name}{fileParts.Extension}"));
+            return await stream.BindAsync(x => ApplyMetadataOptions(request, fileHash, x, $"{fileParts.Directory}/{fileParts.Name}{fileParts.Extension}", shouldCompress));
         }
 
-        private async Task<Response<Unit>> ApplyMetadataOptions(ActionRequest request, byte[] fileHash, byte[] fileStream, string path)
+        private async Task<Response<Unit>> ApplyMetadataOptions(ActionRequest request, byte[] fileHash, byte[] fileStream, string path, bool shouldCompress)
         {
-            var resource = SmartEnum<ResourceOptions>.FromObject(ResourceOptions.File).Value;
-
-            var metadataModel = new FileMetadataModel { Created = DateTime.UtcNow.ToIso8601(), Path = path };
+            var noise = request.Encryption == EncryptionOptions.None ? null : _hash.ComputeHash(path.Utf8ToBytes(), _hash.GenerateSalt(C.OpSecSize)).BytesToBase64();
+            var metadataModel = new FileMetadataModel { Noise = noise, Created = DateTime.UtcNow.ToIso8601(), Path = path, IsCompressible = shouldCompress };
             var configModel = new WassConfigModel
             {
                 EncryptionKeyId = _security.Value.PasswordKeyId,
                 HashKeyId = _security.Value.SaltKeyId,
                 Version = C.Version,
-                Resource = resource,
+                Resource = ResourceOptions.Files,
                 Encryption = request.Encryption,
                 Compression = request.Compression
             };
 
-            var metadataJson = Json.FromModel(metadataModel);
-            var configJson = Json.FromModel(configModel);
+            var configJson = Json.FromModel(configModel, C.JsonOptions);
+            var metadataJson = Json.FromModel(metadataModel, C.JsonOptions);
 
-            var metadataStream = CompressAndEncrypt(request, metadataJson.Utf8ToBytes(), unit: UnitVariant.B);
-            var configStream = CompressAndEncrypt(request, configJson.Utf8ToBytes(), unit: UnitVariant.B);
+            var metadataStream = CompressAndEncrypt(request, metadataJson.Utf8ToBytes(), UnitVariant.B, shouldCompress: false);
+            var configStream = configJson.Utf8ToBytes(); // Config is not encrypted, don't include file info/metadata on this model.
 
-            return await Upload(request, fileHash, fileStream, metadataStream, configStream);
+            return await metadataStream.BindAsync(x => Upload(request, fileHash, fileStream, x, configStream));
         }
 
         private async Task<Response<Unit>> Upload(ActionRequest request, byte[] fileHash, byte[] fileStream, byte[] metadataStream, byte[] configStream)
         {
             var config = _config.Value.Sources[request.Source];
-            var metadataPath = $"{fileHash.BytesToHex()}/v{C.Version}/metadata.wass.bin".ToLowerInvariant();
-            var configPath = $"{fileHash.BytesToHex()}/v{C.Version}/config.wass.json".ToLowerInvariant();
-            var filePath = $"{fileHash.BytesToHex()}/v{C.Version}/file.wass.bin".ToLowerInvariant();
+            var fileHex = fileHash.BytesToHex();
 
-            // Upload metadata first (to catch any issues early), then the request's config, and lastly the actual file.
-            var metadataExists = await _s3.DoesFileExist(request.Source, config.Bucket, metadataPath);
-            if (metadataExists.IsTrue(x => !x))
-            {
-                var createFile = await _s3.CreateFile(request.Source, config.Bucket, metadataPath, metadataStream, S3StorageClass.IntelligentTiering);
-                metadataExists = createFile.Transform(_ => true);
-            }
+            var configPath = SourceKey.GetConfigPath(fileHex, C.Version, ResourceOptions.Files);
+            var metadataPath = SourceKey.GetMetadataPath(fileHex, C.Version, ResourceOptions.Files);
+            var filePath = SourceKey.GetFilePath(fileHex, C.Version, ResourceOptions.Files);
 
-            var configExists = await metadataExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, configPath));
+            // Upload config first (to catch any issues early).
+            var configExists = await  _s3.DoesFileExist(request.Source, config.Bucket, configPath);
             if (configExists.IsTrue(x => !x))
             {
                 var createFile = await _s3.CreateFile(request.Source, config.Bucket, configPath, configStream, S3StorageClass.IntelligentTiering);
-                configExists = createFile.Transform(_ => true);
+                configExists = createFile.Transform(static _ => true);
             }
 
-            var fileExists = await configExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, filePath));
+            var metadataExists = await configExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, metadataPath));
+            if (metadataExists.IsTrue(x => !x))
+            {
+                var createFile = await _s3.CreateFile(request.Source, config.Bucket, metadataPath, metadataStream, S3StorageClass.IntelligentTiering);
+                metadataExists = createFile.Transform(static _ => true);
+            }
+            
+            var fileExists = await metadataExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, filePath));
             if (fileExists.IsTrue(x => !x))
             {
                 var createFile = await _s3.CreateFile(request.Source, config.Bucket, filePath, fileStream, S3StorageClass.IntelligentTiering);
-                fileExists = createFile.Transform(_ => true);
+                fileExists = createFile.Transform(static _ => true);
             }
 
             return fileExists
@@ -120,7 +122,7 @@ namespace Wass.Core.Services.Actions
                 .Log("Successfully backed up file: \"{Path}\".".WithArgs(request.File), "Failed attempting to back up the file: \"{Path}\".".WithArgs(request.File));
         }
 
-        private Response<byte[]> CompressAndEncrypt(ActionRequest request, byte[] data, UnitVariant unit = UnitVariant.KB, bool shouldCompress = true)
+        private Response<byte[]> CompressAndEncrypt(ActionRequest request, byte[] data, UnitVariant unit, bool shouldCompress)
         {
             var stream = Response.Create(data);
             var unitDisplay = unit.ToString();
@@ -130,8 +132,8 @@ namespace Wass.Core.Services.Actions
                 UnitVariant.GB => 1024 * 1024 * 1024,
                 _ => 1
             };
-            if (stream && shouldCompress && request.Compression.HasFlag(CompressionOptions.Brotli)) stream = _brotli.Compress(data).Log(x => "Brotli compression reduced size from {DataSize}{DataUnit} to {CompressedSize}{CompressedUnit}.".WithArgs(data.Length / divisor, unitDisplay, x.Length / divisor, unitDisplay));
-            if (stream && shouldCompress && request.Compression.HasFlag(CompressionOptions.GZip)) stream = _gzip.Compress(data).Log(x => "GZip compression reduced size from {DataSize}{DataUnit} to {CompressedSize}{CompressedUnit}.".WithArgs(data.Length / divisor, unitDisplay, x.Length / divisor, unitDisplay));
+            if (stream && shouldCompress && request.Compression.HasFlag(CompressionOptions.Brotli)) stream = _brotli.Compress(stream).Log(x => "Brotli compression reduced size from {DataSize}{DataUnit} to {CompressedSize}{CompressedUnit}.".WithArgs(data.Length / divisor, unitDisplay, x.Length / divisor, unitDisplay));
+            if (stream && shouldCompress && request.Compression.HasFlag(CompressionOptions.GZip)) stream = _gzip.Compress(stream).Log(x => "GZip compression reduced size from {DataSize}{DataUnit} to {CompressedSize}{CompressedUnit}.".WithArgs(data.Length / divisor, unitDisplay, x.Length / divisor, unitDisplay));
             if (stream && request.Encryption.HasFlag(EncryptionOptions.Aes)) stream = _aes.Encrypt(_security.Value.Password, stream).Log("Data encrypted with AES.");
             return stream;
         }

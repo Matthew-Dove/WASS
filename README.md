@@ -45,6 +45,8 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 > wass decryption {file} [options]
 > wass compression {file} [options]
 > wass decompression {file} [options]
+> wass salt [options]
+> wass password [options]
 ```
 
 Expanded `backup` example with options.  
@@ -69,6 +71,8 @@ encryption      Encrypt a file, and store the result locally.
 decryption      Decrypt a file, and store the result locally.
 compression     Compress a file, and store the result locally.
 decompression   Decompress a file, and store the result locally.
+salt            Generate a cryptographic salt of the specified size in bytes, presented in hex.
+password        Generate a cryptographic password of the specified character length, using a-z, A-Z, 0-9, and special characters.
 ```
 
 **Options:**  
@@ -81,6 +85,7 @@ decompression   Decompress a file, and store the result locally.
 -dr,   --dry-run           Simulate the process, with no side effects.
 -nl,   --no-log            Disable logging for the run.
 -tg,   --tags              Add tags to a backed up file.
+-sz,   --size              Specify the size of the salt, or password to generate.
 ```
 
 **Exit Codes:**

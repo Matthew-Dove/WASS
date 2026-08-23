@@ -15,64 +15,6 @@ internal class Program
 {
     private const int _success = 0, _error = 1, _validation = 2;
 
-    /**
-     * Exit codes are based on success or failure, common standards are:
-     * 0: Success.
-     * 1: Error (operation was not successful, or an exception occurred).
-     * 2: Bad Request (invalid cli commands, or arguments).
-     * 
-     * [CLI]
-     * 
-     * > wass backup {file} [options]
-     * > wass restore {file} [options]
-     * > wass tag {file} [options]
-     * > wass help
-     * > wass encryption {file} [options]
-     * > wass decryption {file} [options]
-     * > wass compression {file} [options]
-     * > wass decompression {file} [options]
-     * 
-     * > wass backup {file} --compress=brotli --encrypt=aes --destination=s3
-     * 
-     * Dash Style: Use a single dash for short options (-f) and double dash for long options (--file).
-     * For parameters that expect a value, use the format --option=value or -o value.
-     * > wass backup --file=myfile.txt --destination=s3
-     * 
-     * It's useful to include a "dry run" option that shows what actions would be taken without making any actual changes.
-     * > wass backup myfile.txt --destination=s3 --dry-run
-     * 
-     * Log errors to stderr, and info messages to stdout, so that they can be handled separately by the caller.
-     * If --no-log is specified, information logging is suppressed.
-     * > wass backup myfile.txt --destination=s3 --no-log
-     * 
-     * Options:
-     *   
-     *   -dn,   --destination       Specify the backup destination (must be S3 compatible).
-     *   -cp,   --compress          Compress the file data before backing up: gzip | brotli.
-     *   -en,   --encrypt           Encrypt file data before backing up: aes.
-     *   -t,    --tag               Add a tag to the file (multiple values separated with a colon ":").
-     *   -h,    --help              Show this help message and exit.
-     *   -dr,   --dry-run           Simulate the backup process, with no side effects.
-     *   -nl,   --no-log            Disable logging for the run.
-     * 
-     * Examples:
-     *   
-     *   wass backup myfile.txt --destination=s3
-     *   wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
-     *   
-     *   wass restore myfile.txt --destination=s3 --location="C:\temp\My Files"
-     *   
-     *   wass tag myfile.txt --tags="tag1:tag2:tag3"
-     *   
-     *   wass help
-     *   
-     *   wass encryption myfile.txt --location=./myfile.txt.enc --encrypt=aes
-     *   wass decryption myfile.txt.enc --location=./myfile.txt --decrypt=aes
-     *   
-     *   wass compression myfile.txt --location=./myfile.txt.zip --compress=gzip
-     *   wass decompression myfile.txt.zip --location=./myfile.txt --decompress=gzip
-     *   
-    **/
     static async Task<int> Main(string[] args)
     {
         Try.SetExceptionLogger(Console.Error.WriteLine);
@@ -83,9 +25,7 @@ internal class Program
         {
             var noLog = args.FirstOrDefault(static x => Command.FlagNl.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagNoLog.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;
             var isSandbox = args.FirstOrDefault(static x => Command.FlagDr.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagDryRun.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;
-#if DEBUG
-            isSandbox = true;
-#endif
+
             host = BuildHost(isSandbox, noLog);
             var cmd = host.Services.GetRequiredService<ICommandService>();
 
@@ -118,6 +58,7 @@ internal class Program
 
         builder.Services.Configure<SecurityConfig>(builder.Configuration.GetSection(SecurityConfig.SECTION_NAME));
         builder.Services.Configure<DestinationConfig>(builder.Configuration.GetSection(DestinationConfig.SECTION_NAME));
+        builder.Services.Configure<DownloadConfig>(builder.Configuration.GetSection(DownloadConfig.SECTION_NAME));
 
         builder.Services.AddServicesByConvention("Wass.Cli", isSandbox, scanInternals: false, "Wass.", "Wass.Core", "Wass.Infrastructure");
 

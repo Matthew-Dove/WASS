@@ -1,8 +1,10 @@
 ﻿using ContainerExpressions.Containers;
 using Microsoft.Extensions.Options;
 using Wass.Cli.Models;
+using Wass.Core;
 using Wass.Core.Models.Configuration;
 using Wass.Core.Models.Options;
+using Wass.Core.Services.Encryption;
 using Wass.Core.Services.Os;
 
 namespace Wass.Cli.Services
@@ -12,13 +14,18 @@ namespace Wass.Cli.Services
         bool IsValid(Command command);
     }
 
-    public sealed class CommandValidator(IAsset _asset, IOptions<DestinationConfig> _config, IOptions<SecurityConfig> _security) : ICommandValidator
+    public sealed class CommandValidator(
+        IAsset _asset,
+        IOptions<DestinationConfig> _config,
+        IOptions<SecurityConfig> _security,
+        IOptions<DownloadConfig> _download
+        ) : ICommandValidator
     {
         public bool IsValid(Command command)
         {
             var isValid = true;
 
-            if (command.Verb != Command.VerbHelp)
+            if (!command.Verb.In([Command.VerbHelp, Command.VerbRestore, Command.VerbSalt, Command.VerbPassword]))
             {
                 isValid = ValidateFile(command.File).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFile), x));
             }
@@ -38,6 +45,8 @@ namespace Wass.Cli.Services
                 isValid = isValid && ValidateSecurity(command.Options, _security.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateSecurity), x));
                 isValid = isValid && ValidateDecompress(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecompress), x));
                 isValid = isValid && ValidateDecrypt(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecrypt), x));
+                isValid = isValid && ValidateFileHash(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFileHash), x));
+                isValid = isValid && ValidateDownload(command.Options, _download.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDownload), x));
             }
 
             if (command.Verb == Command.VerbTag)
@@ -67,6 +76,16 @@ namespace Wass.Cli.Services
             if (command.Verb == Command.VerbDecompression)
             {
                 isValid = isValid && ValidateDecompress(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecompress), x));
+            }
+
+            if (command.Verb == Command.VerbSalt)
+            {
+                isValid = isValid && ValidateSize(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateSize), x));
+            }
+
+            if (command.Verb == Command.VerbPassword)
+            {
+                isValid = isValid && ValidateSize(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateSize), x));
             }
 
             return isValid.LogValue(x => "Did the command args pass validation: {IsValid}.".WithArgs(x));
@@ -192,6 +211,44 @@ namespace Wass.Cli.Services
                 options.TryGetValue(Command.OptionTg, out var tg) && !string.IsNullOrWhiteSpace(tg)
             ).LogF("Invalid value for the tags option, cannot be empty.");
 
+            return isValid;
+        }
+
+        private static bool ValidateSize(Dictionary<string, string> options)
+        {
+            if (!(options.ContainsKey(Command.OptionSize) || options.ContainsKey(Command.OptionSz))) return false.LogF("Size option must be specified.");
+
+            var isValid = (!(options.ContainsKey(Command.OptionSize) & options.ContainsKey(Command.OptionSz)))
+                .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
+                .WithArgs(Command.OptionSize, Command.OptionSz));
+
+            isValid = isValid && (
+                options.TryGetValue(Command.OptionSize, out var size) && int.TryParse(size, out var isize) && isize >= C.OpSecSize ||
+                options.TryGetValue(Command.OptionSz, out var sz) && int.TryParse(sz, out var isz) && isz >= C.OpSecSize
+            ).LogF("Invalid value for the size option, must be >= [{Size}].".WithArgs(C.OpSecSize));
+
+            return isValid;
+        }
+
+        private static bool ValidateFileHash(Dictionary<string, string> options)
+        {
+            if (!(options.ContainsKey(Command.OptionFileHash) || options.ContainsKey(Command.OptionFh))) return false.LogF("FileHash option must be specified.");
+
+            var isValid = (!(options.ContainsKey(Command.OptionSize) & options.ContainsKey(Command.OptionFh)))
+                .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
+                .WithArgs(Command.OptionFileHash, Command.OptionFh));
+
+            isValid = isValid && (
+                options.TryGetValue(Command.OptionFileHash, out var filehash) && filehash.IsValidHex() ||
+                options.TryGetValue(Command.OptionFh, out var fh) && fh.IsValidHex()
+            ).LogF("Invalid value for the filehash option, must be in hex format (lowercase).");
+
+            return isValid;
+        }
+
+        private static bool ValidateDownload(Dictionary<string, string> _, DownloadConfig config)
+        {
+            var isValid = config.IsValid().LogF("Download config is not valid.");
             return isValid;
         }
     }
