@@ -51,7 +51,7 @@ namespace Wass.Core.Services.Actions
 
         private async Task<Response<Unit>> DownloadFile(ActionRequest request)
         {
-            var resposne = new Response<Unit>();
+            var response = new Response<Unit>();
             var config = _config.Value.Sources[request.Source];
 
             var configPath = SourceKey.GetConfigPath(request.FileHash, C.Version, ResourceOptions.Files);
@@ -71,10 +71,10 @@ namespace Wass.Core.Services.Actions
                 var fileBlob = _s3.DownloadFile(request.Source, config.Bucket, filePath);
 
                 var blobs = Expression.FunnelAsync(configBlob, metadataBlob, fileBlob, DecodeBlobs);
-                var isSaved = await blobs.BindAsync(x => Save(configPath, metadataPath, x.FilePath, x.Config, x.Metadata, x.FileData));
+                response = await blobs.BindAsync(x => Save(configPath, metadataPath, x.FilePath, x.Config, x.Metadata, x.FileData));
             }
 
-            return resposne;
+            return response;
         }
         
         private Response<(JsonFormat Config, JsonFormat Metadata, string FilePath, byte[] FileData)> DecodeBlobs(byte[] configBlob, byte[] metadataBlob, byte[] fileBlob)
