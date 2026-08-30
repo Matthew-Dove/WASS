@@ -1,5 +1,4 @@
-﻿using Amazon.Runtime.Internal;
-using ContainerExpressions.Containers;
+﻿using ContainerExpressions.Containers;
 using Wass.Core.Models;
 using Wass.Core.Models.Options;
 using Wass.Core.Services.Encryption;
@@ -26,7 +25,9 @@ namespace Wass.Core.Services.Actions
                 Compression = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.Brotli),
                 Encryption = SmartEnum<EncryptionOptions>.FromObject(EncryptionOptions.Aes),
                 IsDryRun = true,
-                Tags = Array.Empty<string>()
+                Tags = Array.Empty<string>(),
+                UseTemplate = request.UseTemplate,
+                RestoreSchema = request.RestoreSchema
             };
 
             var response = await _backup.Backup(backupRequest);

@@ -12,6 +12,8 @@ namespace Wass.Core.Models
         public EnumRange<CompressionOptions> Compression { get; set; }
         public EnumRange<EncryptionOptions> Encryption { get; set; }
         public string FileHash { get; set; }
+        public bool UseTemplate { get; set; }
+        public bool RestoreSchema { get; set; }
 
         public ActionRequest()
         {
@@ -22,6 +24,8 @@ namespace Wass.Core.Models
             Compression = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.None);
             Encryption = SmartEnum<EncryptionOptions>.FromObject(EncryptionOptions.None);
             FileHash = string.Empty;
+            UseTemplate = true;
+            RestoreSchema = true;
         }
     }
 }

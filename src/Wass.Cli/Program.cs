@@ -59,6 +59,7 @@ internal class Program
         builder.Services.Configure<SecurityConfig>(builder.Configuration.GetSection(SecurityConfig.SECTION_NAME));
         builder.Services.Configure<DestinationConfig>(builder.Configuration.GetSection(DestinationConfig.SECTION_NAME));
         builder.Services.Configure<DownloadConfig>(builder.Configuration.GetSection(DownloadConfig.SECTION_NAME));
+        builder.Services.Configure<CliConfig>(builder.Configuration.GetSection(CliConfig.SECTION_NAME));
 
         builder.Services.AddServicesByConvention("Wass.Cli", isSandbox, scanInternals: false, "Wass.", "Wass.Core", "Wass.Infrastructure");
 

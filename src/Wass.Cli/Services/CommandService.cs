@@ -98,6 +98,8 @@ namespace Wass.Cli.Services
             var source = command.Options.GetOption(Command.OptionDestination, Command.OptionDn);
             var tags = GetTags(command.Options);
             var fileHash = command.Options.GetOption(Command.OptionFileHash, Command.OptionFh);
+            var useTemplate = !command.Flags.HasFlag(Command.FlagNoTemplate, Command.FlagNt);
+            var restoreSchema = !command.Flags.HasFlag(Command.FlagRestoreSchema, Command.FlagNs);
 
             return new ActionRequest
             {
@@ -107,7 +109,9 @@ namespace Wass.Cli.Services
                 Compression = compression,
                 Encryption = encryption,
                 Tags = tags,
-                FileHash = fileHash
+                FileHash = fileHash,
+                UseTemplate = useTemplate,
+                RestoreSchema = restoreSchema
             };
         }
 

@@ -27,11 +27,13 @@
         // Flags.
         public const string FlagDryRun = "--dry-run", FlagDr = "-dr";
         public const string FlagNoLog = "--no-log", FlagNl = "-nl";
+        public const string FlagNoTemplate = "--no-template", FlagNt = "-nt";
+        public const string FlagRestoreSchema = "--no-schema", FlagNs = "-ns";
 
         // Variants.
         public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp, VerbEncryption, VerbDecryption, VerbCompression, VerbDecompression, VerbSalt, VerbPassword];
         public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionDecompress, OptionDp, OptionEncrypt, OptionEn, OptionDecrypt, OptionDe, OptionDestination, OptionDn, OptionTags, OptionTg, OptionSize, OptionSz, OptionFileHash, OptionFh];
-        public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl];
+        public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl, FlagNoTemplate, FlagNt, FlagRestoreSchema, FlagNs];
 
         public string Verb { get; set; }
         public string File { get; set; }

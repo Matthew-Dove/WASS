@@ -296,9 +296,44 @@ namespace Wass.Core.Services.Persistence
                 var response = await client.GetObjectAsync(request).LogValueAsync(x => "Download status from S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, x.HttpStatusCode));
                 response.HttpStatusCode.ThrowIf(static x => x != HttpStatusCode.OK);
 
-                using var ms = new MemoryStream();
-                await response.ResponseStream.CopyToAsync(ms);
-                file = ms.ToArray();
+                var totalBytes = response.ContentLength;
+                using var responseStream = response.ResponseStream;
+
+                if (totalBytes > 0 && totalBytes <= int.MaxValue)
+                {
+                    file = new byte[(int)totalBytes];
+
+                    var totalRead = 0;
+                    var lastPercentDone = -1;
+
+                    while (totalRead < totalBytes)
+                    {
+                        var chunkSize = Math.Min(81920, (int)totalBytes - totalRead);
+                        var read = await responseStream.ReadAsync(file.AsMemory(totalRead, chunkSize));
+                        if (read == 0) break; // End of stream.
+
+                        totalRead += read;
+                        var percentDone = (int)((totalRead * 100L) / totalBytes);
+                        if (percentDone > lastPercentDone)
+                        {
+                            lastPercentDone = percentDone;
+                            Log.Info("S3 file transfer progress for [{Key}]: {PercentDone}%.".WithArgs(key, percentDone));
+                        }
+                    }
+
+                    // Shrink the array to what was actually downloaded.
+                    if (totalRead < file.Length)
+                    {
+                        Array.Resize(ref file, totalRead);
+                    }
+                }
+                else
+                {
+                    // Fallback when content length is unknown.
+                    using var ms = new MemoryStream();
+                    await responseStream.CopyToAsync(ms);
+                    file = ms.ToArray();
+                }
             }
             catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -311,5 +346,31 @@ namespace Wass.Core.Services.Persistence
 
             return file;
         }
+
+        //private static async ResponseAsync<byte[]> DownloadFileFromS3(AmazonS3Client client, string bucket, string key)
+        //{
+        //    var file = Array.Empty<byte>();
+
+        //    try
+        //    {
+        //        var request = new GetObjectRequest { BucketName = bucket, Key = key };
+        //        var response = await client.GetObjectAsync(request).LogValueAsync(x => "Download status from S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, x.HttpStatusCode));
+        //        response.HttpStatusCode.ThrowIf(static x => x != HttpStatusCode.OK);
+
+        //        using var ms = new MemoryStream();
+        //        await response.ResponseStream.CopyToAsync(ms);
+        //        file = ms.ToArray();
+        //    }
+        //    catch (AmazonS3Exception aex) when (aex.StatusCode == HttpStatusCode.NotFound)
+        //    {
+        //        Log.Info("The key [{Key}], does not exist in the bucket [{Bucket}].".WithArgs(key, bucket));
+        //    }
+        //    catch (AggregateException ae) when (ae.InnerExceptions.Count == 1 && ae.InnerException is AmazonS3Exception aex && aex.StatusCode == HttpStatusCode.NotFound)
+        //    {
+        //        Log.Info("The key [{Key}], does not exist in the bucket [{Bucket}].".WithArgs(key, bucket));
+        //    }
+
+        //    return file;
+        //}
     }
 }

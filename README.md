@@ -38,7 +38,7 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 
 ```console
 > wass backup {file} [options]  
-> wass restore {file} [options]
+> wass restore {filehash} [options]
 > wass tag {file} [options]
 > wass help
 > wass encryption {file} [options]
@@ -49,9 +49,14 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 > wass password [options]
 ```
 
-Expanded `backup` example with options.  
+### Backup Example
 ```console
-> wass backup --file=myfile.txt --compress=brotli --encrypt=aes --destination=s3
+> wass backup --file=myfile.txt --destination=s3 --compress=brotli --encrypt=aes
+```
+
+### Restore Example
+```console
+> wass restore --file-hash=6179a23e0a6ba3ef142f5c83054837bcd621663b8971e32a44c5128ec335a4de --destination=s3 
 ```
 
 **Dash Style:**  
@@ -64,7 +69,7 @@ Escape special characters, and delimiters in option values; with a backslash `\`
 **Commands:**
 ```console
 backup          Upload the specified file to the configured destination.
-restore         Download the specified file from the configured destination.
+restore         Download the specified file(hash) from the configured destination.
 tag             Add tags to the file at a specified destination (colon delimited - "tag1:tag2").
 help            Show help message, and exit.
 encryption      Encrypt a file, and store the result locally.
@@ -86,6 +91,9 @@ password        Generate a cryptographic password of the specified character len
 -nl,   --no-log            Disable logging for the run.
 -tg,   --tags              Add tags to a backed up file.
 -sz,   --size              Specify the size of the salt, or password to generate.
+-fh,   --file-hash         The lowercase hex string of the file's hash to restore.
+-nt,   --no-template       Will not use a template when creating config files, prevents reusing redundant data.
+-ns,   --no-schema         Won't create WASS metadata objects under the ~/root/schemas/* directory when restoring a file.
 ```
 
 **Exit Codes:**

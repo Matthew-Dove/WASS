@@ -30,7 +30,7 @@ namespace Wass.Core.Models.Configuration
 
         public static bool IsValid(this DestinationConfig config)
         {
-            var isValid = config?.Sources != null && config.Sources.Count > 0;
+            var isValid = config!= null && config.Sources != null && config.Sources.Count > 0;
 
             foreach (var source in config.Sources)
             {

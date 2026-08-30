@@ -1,7 +1,6 @@
 ﻿using Amazon.S3;
 using ContainerExpressions.Containers;
 using FrameworkContainers.Format.JsonCollective;
-using FrameworkContainers.Format.JsonCollective.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Wass.Core.Models;
@@ -76,16 +75,25 @@ namespace Wass.Core.Services.Actions
                 Compression = request.Compression
             };
 
+            var templateStream = Array.Empty<byte>();
+            if (request.UseTemplate)
+            {
+                var templateJson = Json.FromModel(configModel, C.JsonOptions);
+                templateStream = templateJson.Utf8ToBytes();
+                configModel = new WassConfigModel { TemplatePath = SourceKey.GetConfigTemplatePath(ObjectHasher.HashProperties(configModel), C.Version) };
+            }
+
             var configJson = Json.FromModel(configModel, C.JsonOptions);
             var metadataJson = Json.FromModel(metadataModel, C.JsonOptions);
 
-            var metadataStream = CompressAndEncrypt(request, metadataJson.Utf8ToBytes(), UnitVariant.B, shouldCompress: false);
+            // Config, and metadata are too small to bother with compressing.
+            var metadataStream = CompressAndEncrypt(request, metadataJson.Utf8ToBytes(), UnitVariant.B, shouldCompress: false); // Only encrypt metadata.
             var configStream = configJson.Utf8ToBytes(); // Config is not encrypted, don't include file info/metadata on this model.
 
-            return await metadataStream.BindAsync(x => Upload(request, fileHash, fileStream, x, configStream));
+            return await metadataStream.BindAsync(x => Upload(request, fileHash, fileStream, x, configStream, templateStream, configModel.TemplatePath));
         }
 
-        private async Task<Response<Unit>> Upload(ActionRequest request, byte[] fileHash, byte[] fileStream, byte[] metadataStream, byte[] configStream)
+        private async Task<Response<Unit>> Upload(ActionRequest request, byte[] fileHash, byte[] fileStream, byte[] metadataStream, byte[] configStream, byte[] templateStream, string templatePath)
         {
             var config = _config.Value.Sources[request.Source];
             var fileHex = fileHash.BytesToHex();
@@ -94,12 +102,23 @@ namespace Wass.Core.Services.Actions
             var metadataPath = SourceKey.GetMetadataPath(fileHex, C.Version, ResourceOptions.Files);
             var filePath = SourceKey.GetFilePath(fileHex, C.Version, ResourceOptions.Files);
 
-            // Upload config first (to catch any issues early).
+            // Upload one at a time to catch issues early; start with config.
             var configExists = await  _s3.DoesFileExist(request.Source, config.Bucket, configPath);
             if (configExists.IsTrue(x => !x))
             {
                 var createFile = await _s3.CreateFile(request.Source, config.Bucket, configPath, configStream, S3StorageClass.IntelligentTiering);
                 configExists = createFile.Transform(static _ => true);
+            }
+
+            var templateExists = Response.Create(true);
+            if (request.UseTemplate)
+            {
+                templateExists = await configExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, templatePath));
+                if (templateExists.IsTrue(x => !x))
+                {
+                    var createFile = await _s3.CreateFile(request.Source, config.Bucket, templatePath, templateStream, S3StorageClass.IntelligentTiering);
+                    templateExists = createFile.Transform(static _ => true);
+                }
             }
 
             var metadataExists = await configExists.BindIfAsync(Lambda.Identity, _ => _s3.DoesFileExist(request.Source, config.Bucket, metadataPath));

@@ -12,5 +12,6 @@
         public string Resource { get; set; }
         public string Encryption { get; set; }
         public string Compression { get; set; }
+        public string TemplatePath { get; set; }
     }
 }

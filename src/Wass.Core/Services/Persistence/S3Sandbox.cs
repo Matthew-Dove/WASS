@@ -60,6 +60,7 @@ namespace Wass.Core.Services.Persistence
         public Task<Response<byte[]>> DownloadFile(string source, string bucket, string key)
         {
             if (_s3.TryGetValue($"{_keyPrefix}:{source}:{bucket}:{key}", out var data)) {
+                Log.Info("S3 file transfer progress for [{Key}]: {PercentDone}%.".WithArgs(key, 100));
                 return Task.FromResult(Response.Create(data)).LogValue("Download status from S3 for [{Key}]: {HttpStatusCode}.".WithArgs(key, HttpStatusCode.OK));
             }
 

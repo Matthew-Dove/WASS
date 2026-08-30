@@ -14,6 +14,7 @@ using Wass.Core.Services.Persistence;
 namespace Wass.Core.Services.Actions
 {
     sealed class JsonFormat : Alias<string> { public JsonFormat(string value) : base(value) { } }
+    delegate Task<Response<byte[]>> S3Download(IS3 s3, string key);
 
     public interface IRestoreAction
     {
@@ -51,7 +52,7 @@ namespace Wass.Core.Services.Actions
 
         private async Task<Response<Unit>> DownloadFile(ActionRequest request)
         {
-            var resposne = new Response<Unit>();
+            var response = new Response<Unit>();
             var config = _config.Value.Sources[request.Source];
 
             var configPath = SourceKey.GetConfigPath(request.FileHash, C.Version, ResourceOptions.Files);
@@ -70,20 +71,35 @@ namespace Wass.Core.Services.Actions
                 var metadataBlob = _s3.DownloadFile(request.Source, config.Bucket, metadataPath);
                 var fileBlob = _s3.DownloadFile(request.Source, config.Bucket, filePath);
 
-                var blobs = Expression.FunnelAsync(configBlob, metadataBlob, fileBlob, DecodeBlobs);
-                var isSaved = await blobs.BindAsync(x => Save(configPath, metadataPath, x.FilePath, x.Config, x.Metadata, x.FileData));
+                var download = Task.FromResult(Response.Create(S3DownloadFile(request.Source, config.Bucket)));
+                var blobs = Expression.FunnelAsync(configBlob, metadataBlob, fileBlob, download, DecodeBlobs);
+                response = await blobs.BindAsync(x => Save(request.RestoreSchema, configPath, metadataPath, x.FilePath, x.Config, x.Metadata, x.FileData));
             }
 
-            return resposne;
+            return response;
         }
-        
-        private Response<(JsonFormat Config, JsonFormat Metadata, string FilePath, byte[] FileData)> DecodeBlobs(byte[] configBlob, byte[] metadataBlob, byte[] fileBlob)
+
+        private static S3Download S3DownloadFile(string source, string bucket)
+        {
+            return (x, y) => x
+                .DoesFileExist(source, bucket, y)
+                .ValidateAsync(Lambda.Identity)
+                .BindAsync(_ => x.DownloadFile(source, bucket, y));
+        }
+
+        private async Task<Response<(JsonFormat Config, JsonFormat Metadata, string FilePath, byte[] FileData)>> DecodeBlobs(byte[] configBlob, byte[] metadataBlob, byte[] fileBlob, S3Download download)
         {
             var response = new Response<(JsonFormat, JsonFormat, string, byte[])>();
             var none = SmartEnum<CompressionOptions>.FromObject(CompressionOptions.None);
 
             var configJson = new JsonFormat(configBlob.BytesToUtf8());
-            var config = Json.Response.ToModel<WassConfigModel>(configJson, C.JsonOptions).Validate(x => x?.Version == C.Version);
+            var config = Json.Response.ToModel<WassConfigModel>(configJson, C.JsonOptions).Validate(x => !string.IsNullOrEmpty(x?.TemplatePath) || x?.Version == C.Version);
+            if (config.IsTrue(x => !string.IsNullOrEmpty(x.TemplatePath)))
+            {
+                var templateBlob = await download(_s3, config.Value.TemplatePath);
+                configJson = templateBlob.Transform(x => new JsonFormat(x.BytesToUtf8()));
+                config = configJson.BindValue(x => Json.Response.ToModel<WassConfigModel>(x, C.JsonOptions).Validate(x => x?.Version == C.Version));
+            }
             if (config)
             {
                 var compression = SmartEnum<CompressionOptions>.FromName(config.Value.Compression);
@@ -119,19 +135,26 @@ namespace Wass.Core.Services.Actions
          * i.e. aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/{file|tag}/{config|metadata|file}.wass.bin
          * 
          * Local root: "~/files/*", and "~/schemas/{file_hash}/*" to seperate the content, from WASS data.
-         * i.e. ~/files/{directory}/{name}.{extension}
+         * i.e. ~/{directory}/{name}.{extension}
          * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/config.json
          * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/metadata.json
          * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/tags/*
         **/
-        private Task<Response<Unit>> Save(string configSourcePath, string metadataSourcePath, string fileSourcePath, JsonFormat config, JsonFormat metadata, byte[] fileData)
+        private Task<Response<Unit>> Save(bool restoreSchema, string configSourcePath, string metadataSourcePath, string fileSourcePath, JsonFormat config, JsonFormat metadata, byte[] fileData)
         {
-            var configPath = FileKey.GetConfigPath(_download.Value.LocalRootPath, configSourcePath);
-            var metadataPath = FileKey.GetMetadataPath(_download.Value.LocalRootPath, metadataSourcePath);
-            var filePath = FileKey.GetFilePath(_download.Value.LocalRootPath, fileSourcePath);
+            var happyResult = Task.FromResult(Response.Create(Unit.Instance));
+            var saveConfig = happyResult;
+            var saveMetadata = happyResult;
 
-            var saveConfig = _asset.Save(configPath, config.Value).LogAsync("Config saved to [{File}].".WithArgs(configPath));
-            var saveMetadata = _asset.Save(metadataPath, metadata.Value).LogAsync("Metadata saved to [{File}].".WithArgs(metadataPath));
+            if (restoreSchema.LogValue("Restoring schema files: {RestoreSchema}.".WithArgs(restoreSchema)))
+            {
+                var configPath = FileKey.GetConfigPath(_download.Value.LocalRootPath, configSourcePath);
+                var metadataPath = FileKey.GetMetadataPath(_download.Value.LocalRootPath, metadataSourcePath);
+                saveConfig = _asset.Save(configPath, config.Value).LogAsync("Config saved to [{File}].".WithArgs(configPath));
+                saveMetadata = _asset.Save(metadataPath, metadata.Value).LogAsync("Metadata saved to [{File}].".WithArgs(metadataPath));
+            }
+
+            var filePath = FileKey.GetFilePath(_download.Value.LocalRootPath, fileSourcePath);
             var saveFile = _asset.Save(filePath, fileData).LogAsync("File saved to [{File}].".WithArgs(filePath));
 
             return Expression.FunnelAsync(saveConfig, saveMetadata, saveFile, (x, y, z) => Unit.Instance);
