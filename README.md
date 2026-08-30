@@ -37,10 +37,10 @@ WASS has a CLI for `backing up`, `restoring`, and `tagging` files.
 In general the commands follow this pattern: `> wass <verb> <file> [options]`.   
 
 ```console
+> wass help
 > wass backup {file} [options]  
 > wass restore {filehash} [options]
-> wass tag {file} [options]
-> wass help
+> wass tag {file}|{filehash} [options]
 > wass encryption {file} [options]
 > wass decryption {file} [options]
 > wass compression {file} [options]
@@ -51,7 +51,7 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 
 ### Backup Example
 ```console
-> wass backup --file=myfile.txt --destination=s3 --compress=brotli --encrypt=aes
+> wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes
 ```
 
 ### Restore Example
@@ -70,8 +70,8 @@ Escape special characters, and delimiters in option values; with a backslash `\`
 ```console
 backup          Upload the specified file to the configured destination.
 restore         Download the specified file(hash) from the configured destination.
-tag             Add tags to the file at a specified destination (colon delimited - "tag1:tag2").
 help            Show help message, and exit.
+tag             Add tags to the file at a specified destination (colon delimited - "tag1:tag2").
 encryption      Encrypt a file, and store the result locally.
 decryption      Decrypt a file, and store the result locally.
 compression     Compress a file, and store the result locally.

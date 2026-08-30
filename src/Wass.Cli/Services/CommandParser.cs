@@ -16,9 +16,7 @@ namespace Wass.Cli.Services
     /// <para>Does not validate the values for options, other than they exist.</para>
     /// <para>Does not validte the file, other than it containing correct characters.</para>
     /// </summary>
-    public sealed class CommandParser(
-        IOptions<CliConfig> _cli
-        ) : ICommandParser
+    public sealed class CommandParser() : ICommandParser
     {
         public Response<Command> GetCommand(string[] args)
         {
@@ -28,9 +26,6 @@ namespace Wass.Cli.Services
             if (args.Length < 2) return response.LogErrorValue("{Args}(s) args found, but expected at least 2 arguments.".WithArgs(args.Length));
             if (string.IsNullOrWhiteSpace(args[0])) return response.LogErrorValue("Verb cannot be empty: \"{Verb}\".".WithArgs(args[0]));
             if (string.IsNullOrWhiteSpace(args[1])) return response.LogErrorValue("First arg cannot be empty: \"{Arg}\".".WithArgs(args[1]));
-
-            // Add any pre-configured args.
-            if (!string.IsNullOrEmpty(_cli.Value.Options)) args = args.Concat(_cli.Value.Options.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToArray();
 
             var skipArgs = 2; // Skip the first two args (verb, and file).
             var command = new Command { Verb = args[0], File = args[1] };

@@ -18,8 +18,7 @@ namespace Wass.Cli.Services
         IAsset _asset,
         IOptions<DestinationConfig> _config,
         IOptions<SecurityConfig> _security,
-        IOptions<DownloadConfig> _download,
-        IOptions<CliConfig> _cli
+        IOptions<DownloadConfig> _download
         ) : ICommandValidator
     {
         public bool IsValid(Command command)
@@ -30,8 +29,6 @@ namespace Wass.Cli.Services
             {
                 isValid = ValidateFile(command.File).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFile), x));
             }
-
-            isValid = isValid && ValidateCli(command.Options, _cli.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateCli), x));
 
             if (command.Verb == Command.VerbBackup)
             {
@@ -252,12 +249,6 @@ namespace Wass.Cli.Services
         private static bool ValidateDownload(Dictionary<string, string> _, DownloadConfig config)
         {
             var isValid = config.IsValid().LogF("Download config is not valid.");
-            return isValid;
-        }
-
-        private static bool ValidateCli(Dictionary<string, string> _, CliConfig config)
-        {
-            var isValid = config.IsValid().LogF("Cli config is not valid.");
             return isValid;
         }
     }
