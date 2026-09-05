@@ -15,7 +15,9 @@ namespace Wass.Cli.Services
         ICommandParser _parser,
         ICommandValidator _validator,
         IBackupAction _backup,
-        IRestoreAction _restore
+        IRestoreAction _restore,
+        IEncryptionAction _encryption,
+        IDecryptionAction _decryption
         ) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
@@ -28,18 +30,21 @@ namespace Wass.Cli.Services
             var verb = command.Value.Verb;
             var request = BuildRequest(command);
 
+            // help
             if (verb == Command.VerbHelp)
             {
                 Console.WriteLine(GetHelpText());
                 response = response.With(Unit.Instance);
             }
 
+            // backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes
             if (verb == Command.VerbBackup)
             {
                 var result = await _backup.Backup(request);
                 if (result) response = response.With(Unit.Instance);
             }
 
+            // restore --file-hash=6179a23e... --destination=s3 
             if (verb == Command.VerbRestore)
             {
                 var result = await _restore.Restore(request);
@@ -51,14 +56,18 @@ namespace Wass.Cli.Services
                 // TODO: Implement tag functionality.
             }
 
+            // encryption myfile.txt --encrypt=aes
             if (verb == Command.VerbEncryption)
             {
-                // TODO: Implement ecrypt functionality.
+                var result = await _encryption.EncryptFile(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
+            // decryption myfile.txt.wass.aes --encrypt=aes
             if (verb == Command.VerbDecryption)
             {
-                // TODO: Implement decrypt functionality.
+                var result = await _decryption.DecryptFile(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
             if (verb == Command.VerbCompression)
@@ -160,6 +169,7 @@ namespace Wass.Cli.Services
             return segments.ToArray();
         }
 
+        // TODO: Update with readme file once commands are done.
         private static string GetHelpText()
         {
             return """
@@ -181,32 +191,32 @@ namespace Wass.Cli.Services
 
             Options:
                 -cp,   --compress          Compress the file data before backing up: gzip | brotli.
-                -dp,   --decompress        Decompress the file data before restoring: gzip | brotli.
                 -en,   --encrypt           Encrypt file data before backing up: aes.
-                -de,   --decrypt           Decrypt file data before restoring: aes.
                 -dn,   --destination       Specify the backup destination found in the config (API must be S3 compatible).
                 -dr,   --dry-run           Simulate the process, with no side effects.
                 -nl,   --no-log            Disable logging for the run.
                 -tg,   --tags              Add tags to a backed up file.
                 -sz,   --size              The size of the salt, or password to generate.
                 -fh,   --file-hash         The hash of the file to restore.
+                -nt,   --no-template       Will not use a template when creating config files, prevents reusing redundant data.
+                -ns,   --no-schema         Won't create WASS metadata objects under the root ~/wass/* directory when restoring a file.
 
             Examples:
+                wass help
+
                 wass backup myfile.txt --destination=s3
                 wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
 
-                wass restore myfile.txt --destination=s3 --location="C:\temp\My Files"
+                wass restore myfile.txt --destination=s3
 
                 wass tag myfile.txt --tags="tag1:tag2:tag3"
                 wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
 
-                wass help
-
                 wass compression myfile.txt --compress=brotli
-                wass decompression myfile.txt.br --decompress=brotli
+                wass decompression myfile.txt.br --compress=brotli
 
                 wass encryption myfile.txt.br --encrypt=aes
-                wass decryption myfile.txt.br.bin --decrypt=aes
+                wass decryption myfile.txt.br.bin --encrypt=aes
 
                 wass salt --size=16
                 wass password --size=20

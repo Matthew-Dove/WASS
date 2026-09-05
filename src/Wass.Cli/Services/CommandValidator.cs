@@ -43,8 +43,8 @@ namespace Wass.Cli.Services
             {
                 isValid = isValid && ValidateDestination(command.Options, _config.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDestination), x));
                 isValid = isValid && ValidateSecurity(command.Options, _security.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateSecurity), x));
-                isValid = isValid && ValidateDecompress(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecompress), x));
-                isValid = isValid && ValidateDecrypt(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecrypt), x));
+                isValid = isValid && ValidateCompress(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateCompress), x));
+                isValid = isValid && ValidateEncrypt(command.Options, isRequired: false).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateEncrypt), x));
                 isValid = isValid && ValidateFileHash(command.Options).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateFileHash), x));
                 isValid = isValid && ValidateDownload(command.Options, _download.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDownload), x));
             }
@@ -65,7 +65,7 @@ namespace Wass.Cli.Services
             if (command.Verb == Command.VerbDecryption)
             {
                 isValid = isValid && ValidateSecurity(command.Options, _security.Value).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateSecurity), x));
-                isValid = isValid && ValidateDecrypt(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecrypt), x));
+                isValid = isValid && ValidateEncrypt(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateEncrypt), x));
             }
 
             if (command.Verb == Command.VerbCompression)
@@ -75,7 +75,7 @@ namespace Wass.Cli.Services
 
             if (command.Verb == Command.VerbDecompression)
             {
-                isValid = isValid && ValidateDecompress(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateDecompress), x));
+                isValid = isValid && ValidateCompress(command.Options, isRequired: true).LogValue(x => "{MethodName} OK: {IsValid}.".WithArgs(nameof(ValidateCompress), x));
             }
 
             if (command.Verb == Command.VerbSalt)
@@ -127,10 +127,7 @@ namespace Wass.Cli.Services
         private static bool ValidateSecurity(Dictionary<string, string> options, SecurityConfig config)
         {
             var isEncrypt = options.ContainsKey(Command.OptionEncrypt) || options.ContainsKey(Command.OptionEn);
-            var isDecrypt = options.ContainsKey(Command.OptionDecrypt) || options.ContainsKey(Command.OptionDe);
-
-            var isValid = config.IsValid(isEncrypt || isDecrypt).LogF("Security config is not valid.");
-
+            var isValid = config.IsValid(isEncrypt).LogF("Security config is not valid.");
             return isValid;
         }
 
@@ -150,22 +147,6 @@ namespace Wass.Cli.Services
             return isValid;
         }
 
-        private static bool ValidateDecompress(Dictionary<string, string> options, bool isRequired)
-        {
-            if (!(options.ContainsKey(Command.OptionDecompress) || options.ContainsKey(Command.OptionDp))) return (!isRequired).LogF("Decompress option must be specified.");
-
-            var isValid = (!(options.ContainsKey(Command.OptionCompress) & options.ContainsKey(Command.OptionCp)))
-                .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
-                .WithArgs(Command.OptionDecompress, Command.OptionDp));
-
-            isValid = isValid && (
-                options.TryGetValue(Command.OptionDecompress, out var decompress) && SmartEnum<CompressionOptions>.FromName(decompress) ||
-                options.TryGetValue(Command.OptionDp, out var dp) && SmartEnum<CompressionOptions>.FromName(dp)
-            ).LogF("Invalid value for the decompress option, expected one of: [{CompressionOptions}].".WithArgs(string.Join(", ", SmartEnum<CompressionOptions>.GetNames())));
-
-            return isValid;
-        }
-
         private static bool ValidateEncrypt(Dictionary<string, string> options, bool isRequired)
         {
             if (!(options.ContainsKey(Command.OptionEncrypt) || options.ContainsKey(Command.OptionEn))) return (!isRequired).LogF("Encrypt option must be specified.");
@@ -178,22 +159,6 @@ namespace Wass.Cli.Services
                 options.TryGetValue(Command.OptionEncrypt, out var encrypt) && SmartEnum<EncryptionOptions>.FromName(encrypt) ||
                 options.TryGetValue(Command.OptionEn, out var en) && SmartEnum<EncryptionOptions>.FromName(en)
             ).LogF("Invalid value for the encrypt option, expected one of: [{EncryptionOptions}].".WithArgs(string.Join(", ", SmartEnum<EncryptionOptions>.GetNames())));
-
-            return isValid;
-        }
-
-        private static bool ValidateDecrypt(Dictionary<string, string> options, bool isRequired)
-        {
-            if (!(options.ContainsKey(Command.OptionDecrypt) || options.ContainsKey(Command.OptionDe))) return (!isRequired).LogF("Decrypt option must be specified.");
-
-            var isValid = (!(options.ContainsKey(Command.OptionDecrypt) & options.ContainsKey(Command.OptionDe)))
-                .LogF("Args cannot contain both full, and abbreviated names for the same option: [{FullName)}], and [{AbbreviatedName}]."
-                .WithArgs(Command.OptionDecrypt, Command.OptionDe));
-
-            isValid = isValid && (
-                options.TryGetValue(Command.OptionDecrypt, out var decrypt) && SmartEnum<EncryptionOptions>.FromName(decrypt) ||
-                options.TryGetValue(Command.OptionDe, out var de) && SmartEnum<EncryptionOptions>.FromName(de)
-            ).LogF("Invalid value for the decrypt option, expected one of: [{EncryptionOptions}].".WithArgs(string.Join(", ", SmartEnum<EncryptionOptions>.GetNames())));
 
             return isValid;
         }

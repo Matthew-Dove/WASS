@@ -1,8 +1,6 @@
 ﻿using ContainerExpressions.Containers;
-using Microsoft.Extensions.Options;
 using Wass.Cli.Models;
 using Wass.Core;
-using Wass.Core.Models.Configuration;
 
 namespace Wass.Cli.Services
 {

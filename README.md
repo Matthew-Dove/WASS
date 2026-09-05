@@ -49,16 +49,6 @@ In general the commands follow this pattern: `> wass <verb> <file> [options]`.
 > wass password [options]
 ```
 
-### Backup Example
-```console
-> wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes
-```
-
-### Restore Example
-```console
-> wass restore --file-hash=6179a23e0a6ba3ef142f5c83054837bcd621663b8971e32a44c5128ec335a4de --destination=s3 
-```
-
 **Dash Style:**  
 Use a single dash for short options (-f) and double dash for long options (--file).  
 For parameters that expect a value, use the format `--key=value`, or `-k=value`.  
@@ -82,10 +72,8 @@ password        Generate a cryptographic password of the specified character len
 
 **Options:**  
 ```console
--cp,   --compress          Compress the file data before backing up: gzip | brotli.
--dp,   --decompress        Decompress the file data before restoring: gzip | brotli.
--en,   --encrypt           Encrypt file data before backing up: aes.
--de,   --decrypt           Decrypt file data before restoring: aes.
+-cp,   --compress          The compression algorithm to use when compressing, or decompressing: gzip | brotli.
+-en,   --encrypt           The encryption algorithm to use when encrypting, or decrypting: aes.
 -dn,   --destination       Specify the backup destination found in the config (API must be S3 compatible).
 -dr,   --dry-run           Simulate the process, with no side effects.
 -nl,   --no-log            Disable logging for the run.
@@ -93,7 +81,29 @@ password        Generate a cryptographic password of the specified character len
 -sz,   --size              Specify the size of the salt, or password to generate.
 -fh,   --file-hash         The lowercase hex string of the file's hash to restore.
 -nt,   --no-template       Will not use a template when creating config files, prevents reusing redundant data.
--ns,   --no-schema         Won't create WASS metadata objects under the ~/root/schemas/* directory when restoring a file.
+-ns,   --no-schema         Won't create WASS metadata objects under the root ~/wass/* directory when restoring a file.
+```
+
+**Examples:**  
+```console
+wass help
+
+wass backup myfile.txt --destination=s3
+wass backup myfile.txt --destination=s3 --compress=brotli --encrypt=aes --dry-run --no-log
+
+wass restore myfile.txt --destination=s3
+
+wass tag myfile.txt --tags="tag1:tag2:tag3"
+wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
+
+wass compression myfile.txt --compress=brotli
+wass decompression myfile.txt.br --compress=brotli
+
+wass encryption myfile.txt.br --encrypt=aes
+wass decryption myfile.txt.br.bin --encrypt=aes
+
+wass salt --size=16
+wass password --size=20
 ```
 
 **Exit Codes:**

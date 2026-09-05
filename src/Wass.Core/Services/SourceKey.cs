@@ -13,7 +13,7 @@ namespace Wass.Core.Services
         public const string TemplateKeyPrefix = "templates";
         public const string TemplateConfigName = "config.wass.template.bin";
 
-        public const string SchemaDirectory = "\\schemas\\";
+        public const string SchemaDirectory = "\\wass\\";
         public const string TemplateDirectory = "\\" + TemplateKeyPrefix + "\\";
 
         public static string GetResource(ResourceOptions resource)
@@ -83,6 +83,26 @@ namespace Wass.Core.Services
         private static string GetBasePath(string localRoot, string directory)
         {
             return Path.GetFullPath(Path.Join(localRoot, directory));
+        }
+
+        /// <summary>Change the local file's extension for encryption, or compression verbs.</summary>
+        public static string ChangeExtensionEncCmp(string path, Either<EnumRange<EncryptionOptions>, EnumRange<CompressionOptions>> conversion)
+        {
+            var extension = $"{Path.GetExtension(path)}.wass.{conversion.Match(x => x.ToString(FormatOptions.Lowercase), y => y.ToString(FormatOptions.Lowercase))}";
+            return Path.ChangeExtension(path, extension);
+        }
+
+        /// <summary>Revert the local file's extension for encryption, or compression verbs.</summary>
+        public static string RevertExtensionEncCmp(string path, Either<EnumRange<EncryptionOptions>, EnumRange<CompressionOptions>> conversion)
+        {
+            var targetPath = path + ".file";
+            var expectedExtension = $".wass.{conversion.Match(x => x.ToString(FormatOptions.Lowercase), y => y.ToString(FormatOptions.Lowercase))}";
+            if (path.Length > expectedExtension.Length && path.ToLowerInvariant().EndsWith(expectedExtension))
+            {
+                var outputPath = path[..^expectedExtension.Length];
+                if (!string.IsNullOrEmpty(Path.GetExtension(outputPath))) targetPath = outputPath;
+            }
+            return targetPath;
         }
     }
 }

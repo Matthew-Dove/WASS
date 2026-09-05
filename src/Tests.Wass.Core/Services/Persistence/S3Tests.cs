@@ -67,5 +67,18 @@ namespace Tests.Wass.Core.Services.Persistence
             Assert.True(files.IsValid);
             Assert.NotEmpty(files.Value);
         }
+
+        [Fact(Skip = "Run to download a file from a bucket")]
+        public async Task DownloadFile()
+        {
+            var config = DestinationConfig;
+            var bucketName = config.Value.Sources[Source].Bucket;
+            var s3 = new S3(config);
+
+            var files = await s3.DownloadFile(Source, bucketName, _key); // Assumes the file has been previously uploaded.
+
+            Assert.True(files.IsValid);
+            Assert.NotEmpty(files.Value);
+        }
     }
 }

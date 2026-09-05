@@ -51,7 +51,7 @@ internal class Program
 #endif
         // Add any pre-configured args.
         var cliOptions = builder.Configuration[$"{CliConfig.SECTION_NAME}:{nameof(CliConfig.Options)}"];
-        args = args.Concat(ParseArgs(cliOptions)).ToArray();
+        args = args.Concat(ParseArgs(cliOptions)).GroupBy(x => x).Select(x => x.First()).ToArray();
 
         var noLog = args.FirstOrDefault(static x => Command.FlagNl.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagNoLog.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;
         var isSandbox = args.FirstOrDefault(static x => Command.FlagDr.Equals(x, StringComparison.OrdinalIgnoreCase) || Command.FlagDryRun.Equals(x, StringComparison.OrdinalIgnoreCase)) is not null;

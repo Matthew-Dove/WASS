@@ -136,9 +136,9 @@ namespace Wass.Core.Services.Actions
          * 
          * Local root: "~/files/*", and "~/schemas/{file_hash}/*" to seperate the content, from WASS data.
          * i.e. ~/{directory}/{name}.{extension}
-         * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/config.json
-         * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/metadata.json
-         * ~/schemas/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/tags/*
+         * ~/wass/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/config.json
+         * ~/wass/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/files/metadata.json
+         * ~/wass/aa6dacf60c0f7afed0713ec8291fcc09c041c6e9b37f1155ab6f4d7977be9c17/v1/tags/*
         **/
         private Task<Response<Unit>> Save(bool restoreSchema, string configSourcePath, string metadataSourcePath, string fileSourcePath, JsonFormat config, JsonFormat metadata, byte[] fileData)
         {
