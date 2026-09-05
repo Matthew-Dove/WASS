@@ -17,7 +17,9 @@ namespace Wass.Cli.Services
         IBackupAction _backup,
         IRestoreAction _restore,
         IEncryptionAction _encryption,
-        IDecryptionAction _decryption
+        IDecryptionAction _decryption,
+        ICompressionAction _compression,
+        IDecompressionAction _decompression
         ) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
@@ -70,14 +72,18 @@ namespace Wass.Cli.Services
                 if (result) response = response.With(Unit.Instance);
             }
 
+            // compression myfile.txt --compress=brotli
             if (verb == Command.VerbCompression)
             {
-                // TODO: Implement compress functionality.
+                var result = await _compression.CompressFile(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
+            // decompression myfile.txt.wass.brotli --compress=brotli
             if (verb == Command.VerbDecompression)
             {
-                // TODO: Implement decompress functionality.
+                var result = await _decompression.DecompressFile(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
             if (verb == Command.VerbSalt)
