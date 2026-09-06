@@ -53,7 +53,7 @@ namespace Tests.Wass.Core.Services
         {
             get
             {
-                var config = new DownloadConfig { LocalRootPath = @"C:\Wass\Restores\" };
+                var config = new DownloadConfig { LocalRootPath = Path.Combine(Path.GetTempPath(), "Wass", "Restores") };
 
                 var options = new Mock<IOptions<DownloadConfig>>();
                 options.Setup(x => x.Value).Returns(config);
