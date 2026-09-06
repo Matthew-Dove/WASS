@@ -19,7 +19,9 @@ namespace Wass.Cli.Services
         IEncryptionAction _encryption,
         IDecryptionAction _decryption,
         ICompressionAction _compression,
-        IDecompressionAction _decompression
+        IDecompressionAction _decompression,
+        ISaltAction _salt,
+        IPasswordAction _password
         ) : ICommandService
     {
         public async Task<Response<Either<BadRequest, Unit>>> Execute(string[] args)
@@ -86,14 +88,18 @@ namespace Wass.Cli.Services
                 if (result) response = response.With(Unit.Instance);
             }
 
+            // salt --size=16
             if (verb == Command.VerbSalt)
             {
-                // TODO: Implement salt functionality.
+                var result = await _salt.CreateSalt(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
+            // password --size=20
             if (verb == Command.VerbPassword)
             {
-                // TODO: Implement password functionality.
+                var result = await _password.CreatePassword(request);
+                if (result) response = response.With(Unit.Instance);
             }
 
             return response;
@@ -109,12 +115,15 @@ namespace Wass.Cli.Services
             var encrypt = command.Options.GetOption(Command.OptionEncrypt, Command.OptionEn);
             if (encrypt != string.Empty) encryption = SmartEnum<EncryptionOptions>.FromName(encrypt);
 
+            var tags = GetTags(command.Options);
+
             var isDryRun = command.Flags.HasFlag(Command.FlagDryRun, Command.FlagDr);
             var source = command.Options.GetOption(Command.OptionDestination, Command.OptionDn);
-            var tags = GetTags(command.Options);
             var fileHash = command.Options.GetOption(Command.OptionFileHash, Command.OptionFh);
             var useTemplate = !command.Flags.HasFlag(Command.FlagNoTemplate, Command.FlagNt);
             var restoreSchema = !command.Flags.HasFlag(Command.FlagRestoreSchema, Command.FlagNs);
+            var byteSize = command.Options.GetOption(Command.OptionSize, Command.OptionSz).OrDefault("0");
+            var printSecret = command.Flags.HasFlag(Command.FlagPrintSecret, Command.FlagPs);
 
             return new ActionRequest
             {
@@ -126,7 +135,9 @@ namespace Wass.Cli.Services
                 Tags = tags,
                 FileHash = fileHash,
                 UseTemplate = useTemplate,
-                RestoreSchema = restoreSchema
+                RestoreSchema = restoreSchema,
+                ByteSize = int.Parse(byteSize),
+                PrintSecret = printSecret
             };
         }
 
@@ -206,6 +217,7 @@ namespace Wass.Cli.Services
                 -fh,   --file-hash         The hash of the file to restore.
                 -nt,   --no-template       Will not use a template when creating config files, prevents reusing redundant data.
                 -ns,   --no-schema         Won't create WASS metadata objects under the root ~/wass/* directory when restoring a file.
+                -ps,   --print-secret      By default sensitive values such as salts, and passwords are sent to the clipboard; this flag sends them to stdout: "SECRET#{VALUE}".
 
             Examples:
                 wass help
@@ -215,17 +227,20 @@ namespace Wass.Cli.Services
 
                 wass restore myfile.txt --destination=s3
 
-                wass tag myfile.txt --tags="tag1:tag2:tag3"
+                wass tag myfile.txt --tags="tag"
                 wass tag myfile.txt --tags="tag1:tag2:tag3" --encrypt=aes
 
                 wass compression myfile.txt --compress=brotli
-                wass decompression myfile.txt.br --compress=brotli
+                wass decompression myfile.txt.wass.brotli --compress=brotli
 
-                wass encryption myfile.txt.br --encrypt=aes
-                wass decryption myfile.txt.br.bin --encrypt=aes
+                wass encryption myfile.txt --encrypt=aes
+                wass decryption myfile.txt.wass.aes --encrypt=aes
 
                 wass salt --size=16
+                wass salt --size=16 --print-secret
+
                 wass password --size=20
+                wass password --size=20 --print-secret
 
             Project:
                 https://github.com/matthew-dove/wass
@@ -251,5 +266,7 @@ namespace Wass.Cli.Services
         {
             return flags.ContainsKey(key) || flags.ContainsKey(shortKey);
         }
+
+        public static string OrDefault(this string value, string @default) => string.IsNullOrEmpty(value) ? @default : value;
     }
 }

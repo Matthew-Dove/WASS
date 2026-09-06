@@ -13,8 +13,8 @@ namespace Wass.Core.Services
         public const string TemplateKeyPrefix = "templates";
         public const string TemplateConfigName = "config.wass.template.bin";
 
-        public const string SchemaDirectory = "\\wass\\";
-        public const string TemplateDirectory = "\\" + TemplateKeyPrefix + "\\";
+        public static readonly string SchemaDirectory = Path.DirectorySeparatorChar + "wass" + Path.DirectorySeparatorChar;
+        public static readonly string TemplateDirectory = Path.DirectorySeparatorChar + TemplateKeyPrefix + Path.DirectorySeparatorChar;
 
         public static string GetResource(ResourceOptions resource)
         {

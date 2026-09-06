@@ -19,7 +19,6 @@ namespace Wass.Cli.Services
         public Response<Command> GetCommand(string[] args)
         {
             var response = new Response<Command>();
-
             Log.Info("Args: [{Args}].".WithArgs(string.Join(' ', args)));
 
             if (args.Length == 0) return response.LogErrorValue("No args found.");

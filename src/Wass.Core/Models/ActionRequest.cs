@@ -14,6 +14,8 @@ namespace Wass.Core.Models
         public string FileHash { get; set; }
         public bool UseTemplate { get; set; }
         public bool RestoreSchema { get; set; }
+        public int ByteSize { get; set; }
+        public bool PrintSecret { get; set; }
 
         public ActionRequest()
         {
@@ -26,6 +28,8 @@ namespace Wass.Core.Models
             FileHash = string.Empty;
             UseTemplate = true;
             RestoreSchema = true;
+            ByteSize = 0;
+            PrintSecret = false;
         }
     }
 }

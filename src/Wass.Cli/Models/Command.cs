@@ -2,7 +2,7 @@
 {
     public sealed class Command
     {
-        // Verbs.
+        // Verbs (command keyword).
         public const string VerbBackup = "backup";
         public const string VerbRestore = "restore";
         public const string VerbTag = "tag";
@@ -14,7 +14,7 @@
         public const string VerbSalt = "salt";
         public const string VerbPassword = "password";
 
-        // Options.
+        // Options (key=value).
         public const string OptionCompress = "--compress", OptionCp = "-cp";
         public const string OptionEncrypt = "--encrypt", OptionEn = "-en";
         public const string OptionDestination = "--destination", OptionDn = "-dn";
@@ -22,16 +22,17 @@
         public const string OptionSize = "--size", OptionSz = "-sz";
         public const string OptionFileHash = "--file-hash", OptionFh = "-fh";
 
-        // Flags.
+        // Flags (key only).
         public const string FlagDryRun = "--dry-run", FlagDr = "-dr";
         public const string FlagNoLog = "--no-log", FlagNl = "-nl";
         public const string FlagNoTemplate = "--no-template", FlagNt = "-nt";
         public const string FlagRestoreSchema = "--no-schema", FlagNs = "-ns";
+        public const string FlagPrintSecret = "--print-secret", FlagPs = "-ps";
 
         // Variants.
         public static readonly string[] VerbVariants = [VerbBackup, VerbRestore, VerbTag, VerbHelp, VerbEncryption, VerbDecryption, VerbCompression, VerbDecompression, VerbSalt, VerbPassword];
         public static readonly string[] OptionVariants = [OptionCompress, OptionCp, OptionEncrypt, OptionEn, OptionDestination, OptionDn, OptionTags, OptionTg, OptionSize, OptionSz, OptionFileHash, OptionFh];
-        public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl, FlagNoTemplate, FlagNt, FlagRestoreSchema, FlagNs];
+        public static readonly string[] FlagVariants = [FlagDryRun, FlagDr, FlagNoLog, FlagNl, FlagNoTemplate, FlagNt, FlagRestoreSchema, FlagNs, FlagPrintSecret, FlagPs];
 
         public string Verb { get; set; }
         public string File { get; set; }

@@ -15,7 +15,7 @@ namespace Wass.Core.Services.Os
     public sealed class Asset : IAsset
     {
         /// <summary>When this path is used, a stub file is returned.</summary>
-        public const string SandboxFilePath = @"C:\temp\a9898cf7-03c6-4923-b902-9d85f1a12bda.txt";
+        public static readonly string SandboxFilePath = Path.Combine(Path.GetTempPath(), "a9898cf7-03c6-4923-b902-9d85f1a12bda.txt");
         public const string SandboxFileContents = "Hello, World!";
 
         public Response<bool> Exists(string file) => Try.Run(() => File.Exists(file), "Error checking if file: [{File}] exists.".WithArgs(file));
